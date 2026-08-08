@@ -2,9 +2,9 @@
 
 > 영상 증거 등록부터 AI 분석, 검토·승인, 보고서 발급 및 외부 검증까지 연결하는 딥페이크 포렌식 플랫폼
 
-**개발 기간: 약 2개월 반 · Team Project**
+**📅 개발 기간: 약 2개월 반 · 👥 Team Project**
 
-[Notion Portfolio](TODO) · [Tech Blog](TODO)
+📘 [Notion Portfolio](TODO) · ✍️ [Tech Blog](TODO)
 
 <!-- TODO: 대표 이미지 -->
 
