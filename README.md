@@ -4,7 +4,7 @@
 
 **📅 개발 기간: 약 2개월 반 · 👥 Team Project**
 
-📘 [Notion Portfolio](TODO) · ✍️ [Tech Blog](TODO)
+📘 [Notion Portfolio](TODO) · ✍️ [Tech Blog](TODO) · 🎬 [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
 
 ![ForenShield AI 대표 이미지](./docs/images/readme/forenshield-hero.png)
 
@@ -113,7 +113,7 @@ Next.js → Spring Boot → PostgreSQL / S3 / RabbitMQ → AI Worker
 
 ### 03. 검토 및 승인
 
-<!-- TODO: 검토 화면 -->
+![검토관의 검토 및 승인 화면](./docs/images/readme/review-approval.png)
 
 분석 결과를 검토하고 승인 또는 보완 요청을 처리합니다.
 
@@ -182,4 +182,4 @@ MATCH / MISMATCH를 확인하도록 흐름을 분리했습니다.
 
 - [Notion Portfolio](TODO)
 - [Tech Blog](TODO)
-- [Demo](TODO)
+- [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
