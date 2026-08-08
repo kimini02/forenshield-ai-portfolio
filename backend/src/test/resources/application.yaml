@@ -1,0 +1,70 @@
+spring:
+  profiles:
+    active: test
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+  datasource:
+    url: jdbc:h2:mem:forenshield-test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+
+file:
+  upload-dir: build/test-uploads/original
+
+report:
+  public-verify-base-url: http://localhost:3000/verify
+  public-view-base-url: http://localhost:3000/public-report
+  public-access-ttl-days: 7
+
+ffmpeg:
+  path: C:\ffmpeg\ffmpeg-8.1.1-essentials_build\bin
+
+# 단위 테스트 — Redis 자동설정 제외, RefreshTokenRedisService 인메모리 폴백
+jwt:
+  secret: test-jwt-secret-key-for-unit-tests-only
+  access-expiration-ms: 3600000
+  expiration-ms: 3600000
+  refresh-expiration-days: 7
+
+auth:
+  refresh:
+    enabled: true
+    idle-timeout-minutes: 20
+  cookie:
+    secure: false  # MockMvc http 테스트용
+
+aws:
+  region: ap-northeast-2
+  s3:
+    evidence-bucket: test-evidence-bucket
+
+analysis:
+  worker:
+    step-delay-ms: 0
+    mode: local
+    stale-reaper-enabled: false
+
+hls:
+  packaging:
+    enabled: false
+
+blockchain:
+  anchor:
+    enabled: true
+    mode: simulated
+    network: local-simulated
+    scheduler-enabled: false
+    explorer-url-template: https://explorer.test/tx/{txHash}
+
+evidence:
+  manifest:
+    signing:
+      private-key-location: classpath:crypto/platform-signing-key.pem
+      certificate-location: classpath:crypto/platform-signing-cert.pem

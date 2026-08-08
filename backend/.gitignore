@@ -1,0 +1,59 @@
+.env
+
+HELP.md
+.gradle
+build/
+!gradle/wrapper/gradle-wrapper.jar
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+### STS ###
+.apt_generated
+.classpath
+.factorypath
+.project
+.settings
+.springBeans
+.sts4-cache
+bin/
+!**/src/main/**/bin/
+!**/src/test/**/bin/
+
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+out/
+!**/src/main/**/out/
+!**/src/test/**/out/
+
+### NetBeans ###
+/nbproject/private/
+/nbbuild/
+/dist/
+/nbdist/
+/.nb-gradle/
+
+### VS Code ###
+.vscode/
+
+### Local upload & H2 ###
+uploads/
+data/
+
+### Secrets (never commit) ###
+.env
+.env.local
+.env.*.local
+config/secrets.env
+config/infra.env
+src/main/resources/crypto/*.pem
+src/test/resources/crypto/*.pem
+
+### Spec export artifacts (regenerate locally; optional)
+docs/_spec_export.json
+docs/_spec_structured.json
+docs/requirements/_extracted/
+
+resources/crypto/*.pem

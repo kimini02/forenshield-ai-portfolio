@@ -1,0 +1,5 @@
+# pnpm 11+ : 의존성 빌드 스크립트 허용 목록 (strictDepBuilds 기본 활성화 대응)
+allowBuilds:
+  sharp: true
+  msw: true
+  unrs-resolver: true

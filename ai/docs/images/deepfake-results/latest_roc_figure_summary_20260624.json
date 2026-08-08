@@ -1,0 +1,11 @@
+{
+  "figures": [
+    "/home/sk4team/forenShield-ai/results/figures/timesformer_celebdf_adapt_profile_roc_20260624.png",
+    "/home/sk4team/forenShield-ai/results/figures/timesformer_old_vs_adapt_roc_20260624.png",
+    "/home/sk4team/forenShield-ai/results/figures/gmflow_current_vs_lr_roc_20260624.png"
+  ],
+  "timesformer_latest": {
+    "celebdf_n": 100,
+    "ffpp_vox_n": 100
+  }
+}

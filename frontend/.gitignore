@@ -1,0 +1,37 @@
+# v0 sandbox internal files
+__v0_runtime_loader.js
+__v0_devtools.tsx
+__v0_jsx-dev-runtime.ts
+.snowflake/
+.v0-trash/
+.vercel/
+
+# Environment variables
+.env
+.env*.local
+
+# Common ignores
+node_modules
+.next/
+.DS_Store
+
+# IDE
+.idea/
+
+# Next.js generated
+next-env.d.ts
+
+# Local Swagger/OpenAPI exports
+openapi.json
+docs/api/
+
+# Package manager (이 프로젝트는 pnpm 사용)
+package-lock.json
+
+# personal dev-blog drafts (do NOT commit)
+blog/
+*.blog.md
+
+# 임시 업로드 테스트 파일 (커밋 금지)
+tmp-*.mp4
+tsconfig.tsbuildinfo

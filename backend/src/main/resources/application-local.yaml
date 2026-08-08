@@ -1,0 +1,57 @@
+# 로컬 개발: H2 파일 DB (기본 프로필) — ERD v3 엔티티 기준 자동 스키마
+jwt:
+  secret: ${JWT_SECRET_KEY}
+
+# localhost http — AuthCookieSupport secure=false (쿠키가 http에서도 전달되도록)
+auth:
+  cookie:
+    secure: false
+
+spring:
+  autoconfigure:
+    exclude:
+      - org.springframework.boot.autoconfigure.amqp.RabbitAutoConfiguration
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+      # Docker Redis 없을 때 연결 타임아웃(~3초) 방지 — RefreshTokenRedisService 인메모리 폴백
+      - org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration
+  datasource:
+    url: jdbc:h2:file:./data/demo;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;AUTO_SERVER=TRUE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password:
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.H2Dialect
+  # Redis 사용 시: 위 RedisAutoConfiguration exclude 제거 후 docker run -p 6379:6379 redis:7
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      ssl:
+        enabled: false
+
+analysis:
+  worker:
+    mode: local
+    step-delay-ms: 600
+
+hls:
+  packaging:
+    enabled: false
+
+blockchain:
+  anchor:
+    enabled: true
+    mode: simulated
+    network: local-simulated
+    scheduler-enabled: true
+    daily-cron: "0 0 1 * * *"
+
+report:
+  public-verify-base-url: ${REPORT_PUBLIC_VERIFY_BASE_URL:http://localhost:3000/verify}
+  public-view-base-url: ${REPORT_PUBLIC_VIEW_BASE_URL:http://localhost:3000/public-report}

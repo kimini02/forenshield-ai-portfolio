@@ -1,0 +1,11 @@
+.venv/
+.env
+__pycache__/
+*.pyc
+.idea/
+.vscode/
+.DS_Store
+
+# personal dev-blog drafts (do NOT commit)
+blog/
+*.blog.md

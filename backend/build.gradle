@@ -1,0 +1,104 @@
+plugins {
+	id 'java'
+	id 'org.springframework.boot' version '3.5.14'
+	id 'io.spring.dependency-management' version '1.1.7'
+}
+
+group = 'com.example'
+version = '0.0.1-SNAPSHOT'
+
+java {
+	toolchain {
+		languageVersion = JavaLanguageVersion.of(17)
+	}
+}
+
+repositories {
+	mavenCentral()
+}
+
+ext {
+	set('springAiVersion', "1.1.7")
+}
+
+dependencies {
+	implementation 'org.springframework.boot:spring-boot-starter-actuator'
+	implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+	implementation 'org.springframework.boot:spring-boot-starter-security'
+	implementation 'org.springframework.boot:spring-boot-starter-thymeleaf'
+	implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+	runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+	implementation 'org.springframework.boot:spring-boot-starter-validation'
+	implementation 'org.springframework.boot:spring-boot-starter-web'
+	implementation 'org.springframework.security:spring-security-crypto'
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.5'
+	implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+
+	// 인프라 연동 (Redis · RabbitMQ · S3)
+	implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+	implementation 'org.springframework.boot:spring-boot-starter-amqp'
+	implementation platform('software.amazon.awssdk:bom:2.31.20')
+	implementation 'software.amazon.awssdk:s3'
+	implementation 'software.amazon.awssdk:secretsmanager'
+	// IRSA(웹 아이덴티티 토큰) 자격증명 교환에 필수
+	implementation 'software.amazon.awssdk:sts'
+	implementation 'com.github.librepdf:openpdf:2.0.3'
+	implementation 'com.google.zxing:core:3.5.3'
+	implementation 'com.google.zxing:javase:3.5.3'
+	compileOnly 'org.projectlombok:lombok'
+	developmentOnly 'org.springframework.boot:spring-boot-devtools'
+	runtimeOnly 'org.postgresql:postgresql'
+	runtimeOnly 'com.h2database:h2'
+	testRuntimeOnly 'com.h2database:h2'
+	annotationProcessor 'org.projectlombok:lombok'
+	testImplementation 'org.springframework.boot:spring-boot-starter-test'
+	testCompileOnly 'org.projectlombok:lombok'
+	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+	testAnnotationProcessor 'org.projectlombok:lombok'
+}
+
+dependencyManagement {
+	imports {
+		mavenBom "org.springframework.ai:spring-ai-bom:${springAiVersion}"
+	}
+}
+
+tasks.register('generateTestSigningKeys') {
+	def cryptoDir = layout.projectDirectory.dir('src/test/resources/crypto')
+	def keyFile = cryptoDir.file('platform-signing-key.pem')
+	def certFile = cryptoDir.file('platform-signing-cert.pem')
+
+	outputs.files(keyFile, certFile)
+	onlyIf {
+		!keyFile.asFile.exists() || !certFile.asFile.exists()
+	}
+
+	doLast {
+		cryptoDir.asFile.mkdirs()
+		def opensslConfig = layout.projectDirectory.file('scripts/openssl-test.cnf').asFile.absolutePath
+		exec {
+			commandLine(
+					'openssl', 'genpkey',
+					'-algorithm', 'RSA',
+					'-out', keyFile.asFile.absolutePath
+			)
+		}
+		exec {
+			environment 'OPENSSL_CONF', opensslConfig
+			commandLine(
+					'openssl', 'req', '-new', '-x509',
+					'-key', keyFile.asFile.absolutePath,
+					'-out', certFile.asFile.absolutePath,
+					'-days', '3650',
+					'-subj', '/CN=ForenShield Forensics CA',
+					'-config', opensslConfig
+			)
+		}
+	}
+}
+
+tasks.named('test') {
+	useJUnitPlatform()
+	dependsOn tasks.named('generateTestSigningKeys')
+}

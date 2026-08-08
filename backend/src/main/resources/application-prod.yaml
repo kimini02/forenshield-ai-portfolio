@@ -1,0 +1,83 @@
+# EKS / RDS 운영: POSTGRES_*, JWT_SECRET_KEY 환경 변수 필요
+jwt:
+  secret: ${JWT_SECRET_KEY}
+  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:1200000}  # 액세스 JWT 20분
+  expiration-ms: ${JWT_EXPIRATION_MS:1200000}
+  refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}  # 리프레시 JWT claim 만료(상한). Redis idle TTL(auth.refresh)과 별개
+
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT:5432}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+  # RedisConfig → RefreshTokenRedisService (K8s redis-credentials 시크릿)
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD}
+      ssl:
+        enabled: ${REDIS_SSL:true}   # ElastiCache는 TLS 필수
+  rabbitmq:
+    host: ${RABBITMQ_HOST}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER}
+    password: ${RABBITMQ_PASSWORD}
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+  autoconfigure:
+    exclude: org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  s3:
+    evidence-bucket: ${S3_EVIDENCE_BUCKET}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# 해시·메타데이터 추출용 임시 작업 폴더 (원본 보관은 S3, 컨테이너에서 쓰기 가능한 경로여야 함)
+file:
+  upload-dir: /tmp/uploads
+
+ffmpeg:
+  path: /usr/bin
+
+analysis:
+  worker:
+    mode: ${ANALYSIS_WORKER_MODE:ai}
+    step-delay-ms: 0
+
+blockchain:
+  anchor:
+    enabled: ${BLOCKCHAIN_ANCHOR_ENABLED:true}
+    mode: ${BLOCKCHAIN_ANCHOR_MODE:http}
+    network: ${BLOCKCHAIN_ANCHOR_NETWORK:hyperledger-fabric-forenshield}
+    http-url: ${BLOCKCHAIN_ANCHOR_URL:}
+    http-api-key: ${BLOCKCHAIN_ANCHOR_HTTP_API_KEY:}
+    client-id: ${BLOCKCHAIN_ANCHOR_CLIENT_ID:forenshield-be}
+    http-connect-timeout-ms: ${BLOCKCHAIN_ANCHOR_HTTP_CONNECT_TIMEOUT_MS:5000}
+    http-read-timeout-ms: ${BLOCKCHAIN_ANCHOR_HTTP_READ_TIMEOUT_MS:30000}
+    scheduler-enabled: true
+    daily-cron: "0 0 1 * * *"
+    explorer-url-template: ${BLOCKCHAIN_EXPLORER_URL_TEMPLATE:}
+
+evidence:
+  manifest:
+    signing:
+      secrets-manager-secret-id: ${MANIFEST_SIGNING_SECRET_ID:}
+      private-key-pem: ${MANIFEST_SIGNING_PRIVATE_KEY_PEM:}
+      certificate-pem: ${MANIFEST_SIGNING_CERTIFICATE_PEM:}

@@ -1,0 +1,78 @@
+name: Frontend Deploy Develop (ECR + Argo CD GitOps)
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+
+permissions:
+  id-token: write
+  contents: read
+
+env:
+  AWS_REGION: ap-northeast-2
+  ECR_REPOSITORY: forenshield-frontend
+  INFRA_REPO: sk-final-deepfake/infra-forensic
+  DEPLOYMENT_PATH: config/k8s/frontend/deployment.yaml
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout frontend-deepfake
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials (OIDC)
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to ECR
+        id: ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image
+        env:
+          IMAGE_TAG: develop-${{ github.sha }}
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          NEXT_PUBLIC_USE_MOCK_API: "false"
+          NEXT_PUBLIC_AUTH_REFRESH_ENABLED: "true"
+        run: |
+          docker build \
+            --build-arg NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL \
+            --build-arg NEXT_PUBLIC_USE_MOCK_API=$NEXT_PUBLIC_USE_MOCK_API \
+            --build-arg NEXT_PUBLIC_AUTH_REFRESH_ENABLED=$NEXT_PUBLIC_AUTH_REFRESH_ENABLED \
+            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
+            .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Checkout infra-forensic
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ env.INFRA_REPO }}
+          token: ${{ secrets.INFRA_REPO_TOKEN }}
+          path: infra
+
+      - name: Update nextjs image tag in deployment manifest
+        env:
+          IMAGE_TAG: develop-${{ github.sha }}
+          ECR_REGISTRY: ${{ steps.ecr.outputs.registry }}
+        run: |
+          NEW_IMAGE="$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG"
+          FILE="infra/$DEPLOYMENT_PATH"
+          sed -i "/name: nextjs/,/image:/ s|image: .*forenshield-frontend:.*|image: $NEW_IMAGE|" "$FILE"
+          grep -A1 "name: nextjs" "$FILE"
+
+      - name: Push to infra-forensic (triggers Argo CD)
+        working-directory: infra
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add $DEPLOYMENT_PATH
+          git diff --staged --quiet && echo "No manifest change" && exit 0
+          git commit -m "ci: frontend develop nextjs image → develop-${{ github.sha }}"
+          git push origin master
+
+      # GitOps: Argo CD Auto Sync가 frontend Pod Rolling Update 수행

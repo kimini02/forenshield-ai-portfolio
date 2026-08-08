@@ -1,0 +1,157 @@
+server:
+  port: ${SERVER_PORT:8080}
+
+spring:
+  application:
+    name: forenshield-api
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:local}
+  servlet:
+    multipart:
+      max-file-size: 2GB
+      max-request-size: 2GB
+  autoconfigure:
+    exclude: org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+  rabbitmq:
+    host: ${RABBITMQ_HOST:}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:}
+    password: ${RABBITMQ_PASSWORD:}
+
+jwt:
+  # 운영: JWT_SECRET_KEY 환경 변수 필수 (K8s Secret 등)
+  # 로컬: application-local.yaml 기본값 또는 JWT_SECRET_KEY 직접 설정
+  access-expiration-ms: ${JWT_ACCESS_EXPIRATION_MS:1200000}  # 액세스 JWT 20분 — JwtTokenProvider
+  expiration-ms: ${JWT_EXPIRATION_MS:1200000}
+  refresh-expiration-days: ${JWT_REFRESH_EXPIRATION_DAYS:7}    # 리프레시 JWT claim 만료(상한). Redis idle TTL과 별개
+  step-up-expiration-minutes: ${JWT_STEP_UP_EXPIRATION_MINUTES:15}  # Step-up 재인증 TTL
+
+# AuthCookieSupport — 리프레시 JWT HttpOnly 쿠키 (AuthController 로그인·재발급·로그아웃)
+auth:
+  refresh:
+    # true(기본): HttpOnly refresh 쿠키 + /api/auth/refresh — XSS 대비 액세스 JWT 재발급
+    enabled: ${AUTH_REFRESH_ENABLED:true}
+    # Redis idle TTL(분). 재발급 시 갱신. Access JWT(기본 20분)보다 길게 두어
+    # 사용 중 첫 refresh 시점에 Redis RT가 이미 만료되는 레이스를 막는다.
+    idle-timeout-minutes: ${AUTH_REFRESH_IDLE_TIMEOUT_MINUTES:90}
+  cookie:
+    name: refreshToken
+    path: /
+    secure: ${AUTH_COOKIE_SECURE:true}
+    same-site: ${AUTH_COOKIE_SAME_SITE:Lax}
+    # false(기본): 세션 쿠키 — 브라우저 종료 후 재접속 시 로그아웃
+    persistent: ${AUTH_COOKIE_PERSISTENT:false}
+
+file:
+  upload-dir: ${FILE_UPLOAD_DIR:uploads/original}
+
+ffmpeg:
+  path: ${FFMPEG_PATH:C:\ffmpeg\ffmpeg-8.1.1-essentials_build\bin}
+
+hls:
+  packaging:
+    enabled: ${HLS_PACKAGING_ENABLED:true}
+    max-concurrent: ${HLS_PACKAGING_MAX_CONCURRENT:2}
+    batch-size: ${HLS_PACKAGING_BATCH_SIZE:10}
+    timeout-minutes: ${HLS_PACKAGING_TIMEOUT_MINUTES:30}
+    segment-duration-sec: ${HLS_SEGMENT_DURATION_SEC:6}
+    stale-packaging-minutes: ${HLS_STALE_PACKAGING_MINUTES:45}
+    backfill-interval-ms: ${HLS_BACKFILL_INTERVAL_MS:60000}
+    stale-reaper-interval-ms: ${HLS_STALE_REAPER_INTERVAL_MS:300000}
+    artifact-cleanup-batch-size: ${HLS_ARTIFACT_CLEANUP_BATCH_SIZE:20}
+    content-key-encryption-secret: ${HLS_CONTENT_KEY_ENCRYPTION_SECRET:}
+
+# 인프라팀 env 변수와 1:1 매핑
+forenshield:
+  aws:
+    region: ${AWS_REGION:ap-northeast-2}
+    account-id: ${AWS_ACCOUNT_ID:}
+    role-arn: ${AWS_ROLE_ARN:}
+  s3:
+    evidence-bucket: ${S3_EVIDENCE_BUCKET:}
+    models-bucket: ${S3_MODELS_BUCKET:}
+  ai-gateway-url: ${AI_GATEWAY_URL:}
+  redis:
+    host: ${REDIS_HOST:}
+    port: ${REDIS_PORT:6379}
+    password: ${REDIS_PASSWORD:}
+    ssl: ${REDIS_SSL:false}
+  rabbitmq:
+    host: ${RABBITMQ_HOST:}
+    port: ${RABBITMQ_PORT:5672}
+    username: ${RABBITMQ_USER:}
+    password: ${RABBITMQ_PASSWORD:}
+
+# S3Config · FileService 연동용
+aws:
+  region: ${AWS_REGION:ap-northeast-2}
+  s3:
+    evidence-bucket: ${S3_EVIDENCE_BUCKET:}
+
+analysis:
+  worker:
+    mode: ${ANALYSIS_WORKER_MODE:local}
+    step-delay-ms: ${ANALYSIS_WORKER_STEP_DELAY_MS:600}
+    stale-timeout-minutes: ${ANALYSIS_STALE_TIMEOUT_MINUTES:120}
+    stale-reaper-enabled: ${ANALYSIS_STALE_REAPER_ENABLED:true}
+    stale-reaper-interval-ms: ${ANALYSIS_STALE_REAPER_INTERVAL_MS:300000}
+  frame:
+    extraction-interval-sec: ${ANALYSIS_FRAME_INTERVAL_SEC:1.0}
+    high-risk-frame-score-threshold: ${ANALYSIS_FRAME_HIGH_RISK_THRESHOLD:0.70}
+    min-suspicious-segment-sec: ${ANALYSIS_FRAME_MIN_SEGMENT_SEC:0.5}
+    pixel-format: ${ANALYSIS_FRAME_PIXEL_FORMAT:RGB24}
+    image-encoding: ${ANALYSIS_FRAME_IMAGE_ENCODING:jpeg}
+    max-sample-timestamps: ${ANALYSIS_FRAME_MAX_SAMPLES:120}
+  messaging:
+    analysis-exchange: ${ANALYSIS_EXCHANGE:ai.analysis.exchange}
+    result-exchange: ${AI_RESULT_EXCHANGE:ai.result.exchange}
+    dead-letter-exchange: ${ANALYSIS_DLX:ai.dead.exchange}
+    video-analysis-routing-key: ${ANALYSIS_ROUTING_KEY:analyze.video}
+    video-result-routing-key: ${AI_RESULT_ROUTING_KEY:result.video}
+    presign-duration-minutes: ${ANALYSIS_PRESIGN_MINUTES:120}
+
+blockchain:
+  anchor:
+    enabled: ${BLOCKCHAIN_ANCHOR_ENABLED:true}
+    mode: ${BLOCKCHAIN_ANCHOR_MODE:simulated}
+    network: ${BLOCKCHAIN_ANCHOR_NETWORK:local-simulated}
+    http-url: ${BLOCKCHAIN_ANCHOR_URL:}
+    http-api-key: ${BLOCKCHAIN_ANCHOR_HTTP_API_KEY:}
+    client-id: ${BLOCKCHAIN_ANCHOR_CLIENT_ID:forenshield-be}
+    http-connect-timeout-ms: ${BLOCKCHAIN_ANCHOR_HTTP_CONNECT_TIMEOUT_MS:5000}
+    http-read-timeout-ms: ${BLOCKCHAIN_ANCHOR_HTTP_READ_TIMEOUT_MS:30000}
+    scheduler-enabled: ${BLOCKCHAIN_ANCHOR_SCHEDULER_ENABLED:true}
+    daily-cron: ${BLOCKCHAIN_ANCHOR_DAILY_CRON:0 0 1 * * *}
+    explorer-url-template: ${BLOCKCHAIN_EXPLORER_URL_TEMPLATE:}
+
+# RQ-REQ-050: 단일 플랫폼 CA Manifest 서명 (PKCS#8 + X.509)
+evidence:
+  manifest:
+    issuer: ${MANIFEST_ISSUER:ForenShield Digital Forensics}
+    signing:
+      private-key-pem: ${MANIFEST_SIGNING_PRIVATE_KEY_PEM:}
+      private-key-location: ${MANIFEST_SIGNING_KEY_LOCATION:classpath:crypto/platform-signing-key.pem}
+      certificate-pem: ${MANIFEST_SIGNING_CERTIFICATE_PEM:}
+      certificate-location: ${MANIFEST_SIGNING_CERT_LOCATION:classpath:crypto/platform-signing-cert.pem}
+      secrets-manager-secret-id: ${MANIFEST_SIGNING_SECRET_ID:}
+
+# AI 분석 전 화질 적합성 (video_readiness.py 연동)
+readiness:
+  frame-check-enabled: ${READINESS_FRAME_CHECK_ENABLED:true}
+  python-executable: ${READINESS_PYTHON:python}
+  # 예: C:/FINAL/ai-forensic/scripts/profile/video_readiness.py
+  script-path: ${READINESS_SCRIPT_PATH:}
+  sample-every: ${READINESS_SAMPLE_EVERY:10}
+  process-timeout-seconds: ${READINESS_PROCESS_TIMEOUT_SEC:180}
+
+# 공개 보고서 QR·외부 열람 URL
+report:
+  # 운영에서는 검증 URL 환경 변수를 반드시 설정한다. 미리보기 PDF에는 URL을 넣지 않는다.
+  public-verify-base-url: ${REPORT_PUBLIC_VERIFY_BASE_URL}
+  # 외부 열람 화면을 운영할 때만 설정한다. QR 검증 URL 발행에는 사용하지 않는다.
+  public-view-base-url: ${REPORT_PUBLIC_VIEW_BASE_URL:}
+  public-access-ttl-days: ${REPORT_PUBLIC_ACCESS_TTL_DAYS:7}
+
+springdoc:
+  swagger-ui:
+    persist-authorization: true

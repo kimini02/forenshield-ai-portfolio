@@ -1,0 +1,2 @@
+ALTER TABLE user_settings
+    ADD COLUMN IF NOT EXISTS list_sort_mode VARCHAR(20) NOT NULL DEFAULT 'NEWEST';

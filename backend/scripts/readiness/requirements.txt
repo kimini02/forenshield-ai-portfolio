@@ -1,0 +1,3 @@
+# video_readiness.py runtime (bundled in backend image for FRAME_SAMPLE)
+opencv-python-headless>=4.8.0,<5
+numpy>=1.24.0,<3
