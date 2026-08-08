@@ -4,7 +4,7 @@
 
 **개발 기간: 약 2개월 반 · Team Project**
 
-[Notion Portfolio](TODO) · [Tech Blog](TODO) · [Demo](TODO)
+[Notion Portfolio](TODO) · [Tech Blog](TODO)
 
 <!-- TODO: 대표 이미지 -->
 
