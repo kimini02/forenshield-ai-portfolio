@@ -6,7 +6,7 @@
 
 📘 [Notion Portfolio](TODO) · ✍️ [Tech Blog](TODO)
 
-<!-- TODO: 대표 이미지 -->
+![ForenShield AI 대표 이미지](./docs/images/readme/forenshield-hero.png)
 
 ForenShield AI는 단순히 영상의 딥페이크 여부를 판별하는 데서 끝나지 않고,  
 영상이 증거로 등록된 이후 분석·검토·보고서 발급·외부 검증까지 이어지는  
@@ -29,27 +29,21 @@ ForenShield AI는 단순히 영상의 딥페이크 여부를 판별하는 데서
 
 ## 핵심 기능
 
-### 사건 · 증거 관리
+![ForenShield AI 업무 흐름](./docs/images/readme/workflow-overview.png)
 
-<!-- TODO: 사건·증거 관리 기능 이미지 -->
+### 사건 · 증거 관리
 
 영상 증거를 사건 단위로 등록하고 분석 상태와 처리 이력을 관리합니다.
 
 ### AI 분석
 
-<!-- TODO: AI 분석 기능 이미지 -->
-
 장시간 분석 작업의 상태를 추적하고 완료 후 상세 분석 결과를 제공합니다.
 
 ### 검토 · 승인
 
-<!-- TODO: 검토·승인 기능 이미지 -->
-
 검토 요청, 검토자 배정, 승인·보완 요청까지 역할 기반 workflow를 제공합니다.
 
 ### 보고서 · 외부 검증
-
-<!-- TODO: 보고서·외부 검증 기능 이미지 -->
 
 분석 결과를 PDF로 발행하고 QR 기반 발행 정보 조회와 PDF SHA-256 비교를 제공합니다.
 
@@ -57,7 +51,7 @@ ForenShield AI는 단순히 영상의 딥페이크 여부를 판별하는 데서
 
 ## System Architecture
 
-<!-- TODO: 시스템 아키텍처 이미지 -->
+![ForenShield AI 시스템 아키텍처](./docs/images/readme/system-architecture.png)
 
 ```text
 Next.js → Spring Boot → PostgreSQL / S3 / RabbitMQ → AI Worker
@@ -107,13 +101,13 @@ Next.js → Spring Boot → PostgreSQL / S3 / RabbitMQ → AI Worker
 
 ### 01. 사건 및 영상 증거 등록
 
-<!-- TODO: 사건·증거 등록 화면 -->
+![안전한 영상 증거 열람 화면](./docs/images/readme/evidence-view.png)
 
 사건을 생성하고 분석할 영상 증거를 등록합니다.
 
 ### 02. AI 분석 및 결과 조회
 
-<!-- TODO: 분석 결과 화면 -->
+![AI 분석 및 결과 조회 화면](./docs/images/readme/ai-analysis.png)
 
 분석 진행 상태를 확인하고 완료 후 상세 분석 결과를 조회합니다.
 
@@ -125,13 +119,13 @@ Next.js → Spring Boot → PostgreSQL / S3 / RabbitMQ → AI Worker
 
 ### 04. PDF 보고서
 
-<!-- TODO: PDF 보고서 화면 -->
+![PDF 보고서 발행 화면](./docs/images/readme/pdf-report.png)
 
 승인된 분석 결과를 PDF 보고서로 발행합니다.
 
 ### 05. QR / PDF 검증
 
-<!-- TODO: QR 검증 화면 -->
+![증거 무결성 검증 화면](./docs/images/readme/evidence-integrity.png)
 
 QR로 보고서 발행 정보를 조회하고 보유한 PDF의 SHA-256을 비교합니다.
 
