@@ -1,0 +1,8 @@
+metric	before	after	change
+content	10	10	same
+domain_rows	157500	139	-99.912%
+p50_ms	2148.945	346.757	-83.864%
+p95_ms	3234.435	401.1778	-87.597%
+p99_ms	3641.197	429.64596	-88.200%
+allocation_mib_per_request	276.333	0.933333	-99.662%
+vu10	OOM reproduced	0% failure	OOM not reproduced after refactoring

@@ -1,0 +1,55 @@
+                                            version
+------------------------------------------------------------------------------------------------
+ PostgreSQL 16.13 on aarch64-unknown-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit
+(1 row)
+
+ work_mem
+----------
+ 4MB
+(1 row)
+
+                                                               QUERY PLAN
+----------------------------------------------------------------------------------------------------------------------------------------
+ Gather Merge  (cost=11122.96..13152.36 rows=17647 width=969) (actual time=78.837..88.281 rows=30000 loops=1)
+   Workers Planned: 1
+   Workers Launched: 1
+   Buffers: shared hit=1107, temp read=616 written=617
+   I/O Timings: temp read=0.623 write=28.022
+   ->  Sort  (cost=10122.95..10167.07 rows=17647 width=969) (actual time=55.820..56.885 rows=15000 loops=2)
+         Sort Key: uploaded_at DESC
+         Sort Method: external merge  Disk: 4928kB
+         Buffers: shared hit=1107, temp read=616 written=617
+         I/O Timings: temp read=0.623 write=28.022
+         Worker 0:  Sort Method: quicksort  Memory: 3264kB
+         ->  Parallel Seq Scan on evidences e  (cost=0.00..1335.71 rows=17647 width=969) (actual time=0.015..12.822 rows=15000 loops=2)
+               Filter: ((deleted_at IS NULL) AND (uploader_id = 1) AND ((status)::text = 'UPLOADED'::text))
+               Buffers: shared hit=1071
+ Planning:
+   Buffers: shared hit=226 dirtied=1
+ Planning Time: 2.018 ms
+ Execution Time: 89.761 ms
+(18 rows)
+
+                                                              QUERY PLAN
+---------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=16353.72..16578.72 rows=90000 width=91) (actual time=175.824..181.391 rows=90000 loops=1)
+   Sort Key: ar.requested_at DESC
+   Sort Method: external merge  Disk: 8544kB
+   Buffers: shared hit=2370, temp read=1068 written=1071
+   I/O Timings: temp read=1.010 write=87.376
+   ->  Hash Join  (cost=1896.00..4331.28 rows=90000 width=91) (actual time=12.008..46.307 rows=90000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=2370
+         ->  Seq Scan on analysis_requests ar  (cost=0.00..2199.00 rows=90000 width=91) (actual time=0.009..12.718 rows=90000 loops=1)
+               Buffers: shared hit=1299
+         ->  Hash  (cost=1521.00..1521.00 rows=30000 width=8) (actual time=11.949..11.950 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=1071
+               ->  Seq Scan on evidences e  (cost=0.00..1521.00 rows=30000 width=8) (actual time=0.004..8.158 rows=30000 loops=1)
+                     Filter: ((deleted_at IS NULL) AND (uploader_id = 1) AND ((status)::text = 'UPLOADED'::text))
+                     Buffers: shared hit=1071
+ Planning:
+   Buffers: shared hit=176 dirtied=1
+ Planning Time: 1.268 ms
+ Execution Time: 184.523 ms
+(20 rows)
