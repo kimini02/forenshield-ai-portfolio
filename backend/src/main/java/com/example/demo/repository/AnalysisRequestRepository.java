@@ -15,6 +15,8 @@ public interface AnalysisRequestRepository extends JpaRepository<AnalysisRequest
 
     List<AnalysisRequest> findByEvidenceIdInOrderByRequestedAtDesc(List<Long> evidenceIds);
 
+    List<AnalysisRequest> findByEvidenceIdInOrderByRequestedAtDescAnalysisRequestIdDesc(List<Long> evidenceIds);
+
     List<AnalysisRequest> findByEvidenceIdOrderByRequestedAtDesc(Long evidenceId);
 
     boolean existsByEvidenceId(Long evidenceId);
