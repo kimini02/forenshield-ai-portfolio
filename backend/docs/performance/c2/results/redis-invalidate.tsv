@@ -1,0 +1,7 @@
+step	cache_a	cache_b	redis_key	aggregate_calls	value
+A_put	stored	not_read	present	0	90000/5000/7500/15000
+B_get	n/a	hit	present	0	90000/5000/7500/15000
+A_invalidate	deleted	n/a	absent	0	n/a
+B_get_after_invalidate	n/a	miss	absent	0	null
+B_service_refresh	n/a	stored	present	1	90001/5000/7500/15000
+A_get_after_refresh	hit	n/a	present	0	90001/5000/7500/15000

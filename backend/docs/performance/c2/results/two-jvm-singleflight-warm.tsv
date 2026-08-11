@@ -1,0 +1,6 @@
+phase	step_or_requests	port_or_distribution	latency_or_p50_ms	p95_ms	p99_ms	failure_rate	aggregate_calls_delta	auth_select_calls_delta
+warmup	A1	18080	256.158	NA	NA	0.00%	1	1
+warmup	B1	18081	320.873	NA	NA	0.00%	1	1
+warmup	A2	18080	25.495	NA	NA	0.00%	0	1
+warmup	B2	18081	7.473	NA	NA	0.00%	0	1
+alternating_warm	100	A50/B50	5.743	10.46925	24.45539	0.00%	0	100

@@ -1,0 +1,5 @@
+step	port	api_latency_ms	aggregate_calls_delta	aggregate_calls_a_cumulative	aggregate_calls_b_cumulative	result
+A Cold	18080	143.213	1	1	0	90000/5000/7500/15000
+A Warm	18080	9.331	0	1	0	90000/5000/7500/15000
+B Cold	18081	290.025	1	1	1	90000/5000/7500/15000
+B Warm	18081	8.379	0	1	1	90000/5000/7500/15000

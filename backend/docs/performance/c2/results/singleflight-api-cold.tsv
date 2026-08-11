@@ -1,0 +1,5 @@
+run	http_status	api_latency_ms	aggregate_calls	aggregate_exec_ms	auth_user_select_calls	total_selects	result
+1	200	319.805	1	79.969	1	2	90000/5000/7500/15000
+2	200	120.978	1	44.191	1	2	90000/5000/7500/15000
+3	200	173.356	1	68.631	1	2	90000/5000/7500/15000
+median	200	173.356	1	68.631	1	2	90000/5000/7500/15000

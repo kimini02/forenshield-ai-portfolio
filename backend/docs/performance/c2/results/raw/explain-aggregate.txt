@@ -1,0 +1,532 @@
+          measurement
+--------------------------------
+ WARMUP EXISTING (not measured)
+(1 row)
+
+ count | count | count | count
+-------+-------+-------+-------
+ 90000 |  5000 |  7500 | 15000
+(1 row)
+
+           measurement
+---------------------------------
+ WARMUP AGGREGATE (not measured)
+(1 row)
+
+ count | count | count | count
+-------+-------+-------+-------
+ 90000 |  5000 |  7500 | 15000
+(1 row)
+
+             measurement
+--------------------------------------
+ RUN 1 EXISTING Q1 totalAnalysisCount
+(1 row)
+
+                                                              QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=4332.28..4332.29 rows=1 width=8) (actual time=28.892..28.895 rows=1 loops=1)
+   Buffers: shared hit=2071
+   ->  Hash Join  (cost=1643.00..4107.28 rows=90000 width=8) (actual time=6.052..25.505 rows=90000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=2071
+         ->  Seq Scan on analysis_requests ar  (cost=0.00..2228.00 rows=90000 width=16) (actual time=0.004..6.893 rows=90000 loops=1)
+               Filter: (requested_by = 1)
+               Buffers: shared hit=1103
+         ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.006..6.008 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=968
+               ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.003..3.563 rows=30000 loops=1)
+                     Filter: (deleted_at IS NULL)
+                     Buffers: shared hit=968
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.151 ms
+ Execution Time: 29.043 ms
+(18 rows)
+
+               measurement
+-----------------------------------------
+ RUN 1 EXISTING Q2 deepfakeDetectedCount
+(1 row)
+
+                                                                          QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1930.76..1930.77 rows=1 width=8) (actual time=7.404..7.405 rows=1 loops=1)
+   Buffers: shared hit=15463
+   ->  Nested Loop  (cost=335.54..1929.72 rows=414 width=8) (actual time=1.363..7.211 rows=5000 loops=1)
+         Buffers: shared hit=15463
+         ->  Hash Join  (cost=335.25..1569.48 rows=414 width=16) (actual time=1.353..3.037 rows=5000 loops=1)
+               Hash Cond: (ar.analysis_request_id = r.analysis_request_id)
+               Buffers: shared hit=463
+               ->  Bitmap Heap Scan on analysis_requests ar  (cost=86.00..1300.69 rows=7446 width=16) (actual time=0.136..1.082 rows=7500 loops=1)
+                     Recheck Cond: ((status)::text = 'COMPLETED'::text)
+                     Filter: (requested_by = 1)
+                     Heap Blocks: exact=363
+                     Buffers: shared hit=370
+                     ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..84.14 rows=7446 width=0) (actual time=0.110..0.110 rows=7500 loops=1)
+                           Index Cond: ((status)::text = 'COMPLETED'::text)
+                           Buffers: shared hit=7
+               ->  Hash  (cost=186.75..186.75 rows=5000 width=8) (actual time=1.205..1.206 rows=5000 loops=1)
+                     Buckets: 8192  Batches: 1  Memory Usage: 260kB
+                     Buffers: shared hit=93
+                     ->  Seq Scan on analysis_results r  (cost=0.00..186.75 rows=5000 width=8) (actual time=0.003..0.747 rows=5000 loops=1)
+                           Filter: ((risk_level)::text = ANY ('{HIGH,MEDIUM}'::text[]))
+                           Rows Removed by Filter: 2500
+                           Buffers: shared hit=93
+         ->  Index Scan using evidences_pkey on evidences e  (cost=0.29..0.87 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=5000)
+               Index Cond: (evidence_id = ar.evidence_id)
+               Filter: (deleted_at IS NULL)
+               Buffers: shared hit=15000
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.232 ms
+ Execution Time: 7.460 ms
+(30 rows)
+
+           measurement
+----------------------------------
+ RUN 1 EXISTING Q3 completedCount
+(1 row)
+
+                                                                          QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=2817.70..2817.71 rows=1 width=8) (actual time=7.808..7.811 rows=1 loops=1)
+   Buffers: shared hit=1338
+   ->  Hash Join  (cost=1393.76..2799.08 rows=7446 width=8) (actual time=1.464..7.523 rows=7500 loops=1)
+         Hash Cond: (e.evidence_id = ar.evidence_id)
+         Buffers: shared hit=1338
+         ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.558 rows=30000 loops=1)
+               Filter: (deleted_at IS NULL)
+               Buffers: shared hit=968
+         ->  Hash  (cost=1300.69..1300.69 rows=7446 width=16) (actual time=1.450..1.451 rows=7500 loops=1)
+               Buckets: 8192  Batches: 1  Memory Usage: 416kB
+               Buffers: shared hit=370
+               ->  Bitmap Heap Scan on analysis_requests ar  (cost=86.00..1300.69 rows=7446 width=16) (actual time=0.126..0.817 rows=7500 loops=1)
+                     Recheck Cond: ((status)::text = 'COMPLETED'::text)
+                     Filter: (requested_by = 1)
+                     Heap Blocks: exact=363
+                     Buffers: shared hit=370
+                     ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..84.14 rows=7446 width=0) (actual time=0.100..0.101 rows=7500 loops=1)
+                           Index Cond: ((status)::text = 'COMPLETED'::text)
+                           Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.133 ms
+ Execution Time: 7.906 ms
+(23 rows)
+
+            measurement
+-----------------------------------
+ RUN 1 EXISTING Q4 inProgressCount
+(1 row)
+
+                                                                        QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=3204.18..3204.19 rows=1 width=8) (actual time=10.203..10.205 rows=1 loops=1)
+   Buffers: shared hit=1345
+   ->  Hash Join  (cost=1805.46..3167.45 rows=14694 width=8) (actual time=6.507..9.552 rows=15000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=1345
+         ->  Bitmap Heap Scan on analysis_requests ar  (cost=162.46..1485.87 rows=14694 width=16) (actual time=0.214..1.715 rows=15000 loops=1)
+               Recheck Cond: ((status)::text = ANY ('{QUEUED,ANALYZING}'::text[]))
+               Filter: (requested_by = 1)
+               Heap Blocks: exact=363
+               Buffers: shared hit=377
+               ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..158.79 rows=14694 width=0) (actual time=0.187..0.187 rows=15000 loops=1)
+                     Index Cond: ((status)::text = ANY ('{QUEUED,ANALYZING}'::text[]))
+                     Buffers: shared hit=14
+         ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.241..6.241 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=968
+               ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.005..3.655 rows=30000 loops=1)
+                     Filter: (deleted_at IS NULL)
+                     Buffers: shared hit=968
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.143 ms
+ Execution Time: 10.332 ms
+(23 rows)
+
+   measurement
+-----------------
+ RUN 1 AGGREGATE
+(1 row)
+
+                                                                           QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=6006.43..6006.44 rows=1 width=32) (actual time=29.154..30.566 rows=1 loops=1)
+   Buffers: shared hit=3290
+   ->  Gather  (cost=6006.31..6006.42 rows=1 width=32) (actual time=28.875..30.560 rows=2 loops=1)
+         Workers Planned: 1
+         Workers Launched: 1
+         Buffers: shared hit=3290
+         ->  Partial Aggregate  (cost=5006.31..5006.32 rows=1 width=32) (actual time=27.690..27.692 rows=1 loops=2)
+               Buffers: shared hit=3290
+               ->  Hash Left Join  (cost=1904.75..3947.49 rows=52941 width=12) (actual time=8.555..23.107 rows=45000 loops=2)
+                     Hash Cond: (ar.analysis_request_id = r.analysis_request_id)
+                     Buffers: shared hit=3287
+                     ->  Hash Join  (cost=1643.00..3546.76 rows=52941 width=15) (actual time=7.354..16.995 rows=45000 loops=2)
+                           Hash Cond: (ar.evidence_id = e.evidence_id)
+                           Buffers: shared hit=3101
+                           ->  Parallel Seq Scan on analysis_requests ar  (cost=0.00..1764.76 rows=52941 width=23) (actual time=0.004..3.805 rows=45000 loops=2)
+                                 Filter: (requested_by = 1)
+                                 Buffers: shared hit=1103
+                           ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.969..6.969 rows=30000 loops=2)
+                                 Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+                                 Buffers: shared hit=1936
+                                 ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.011..4.082 rows=30000 loops=2)
+                                       Filter: (deleted_at IS NULL)
+                                       Buffers: shared hit=1936
+                     ->  Hash  (cost=168.00..168.00 rows=7500 width=13) (actual time=1.183..1.183 rows=7500 loops=2)
+                           Buckets: 8192  Batches: 1  Memory Usage: 416kB
+                           Buffers: shared hit=186
+                           ->  Seq Scan on analysis_results r  (cost=0.00..168.00 rows=7500 width=13) (actual time=0.013..0.484 rows=7500 loops=2)
+                                 Buffers: shared hit=186
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.212 ms
+ Execution Time: 30.768 ms
+(32 rows)
+
+   measurement
+-----------------
+ RUN 2 AGGREGATE
+(1 row)
+
+                                                                           QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=6006.43..6006.44 rows=1 width=32) (actual time=28.709..29.893 rows=1 loops=1)
+   Buffers: shared hit=3290
+   ->  Gather  (cost=6006.31..6006.42 rows=1 width=32) (actual time=28.469..29.889 rows=2 loops=1)
+         Workers Planned: 1
+         Workers Launched: 1
+         Buffers: shared hit=3290
+         ->  Partial Aggregate  (cost=5006.31..5006.32 rows=1 width=32) (actual time=27.160..27.163 rows=1 loops=2)
+               Buffers: shared hit=3290
+               ->  Hash Left Join  (cost=1904.75..3947.49 rows=52941 width=12) (actual time=8.310..22.612 rows=45000 loops=2)
+                     Hash Cond: (ar.analysis_request_id = r.analysis_request_id)
+                     Buffers: shared hit=3287
+                     ->  Hash Join  (cost=1643.00..3546.76 rows=52941 width=15) (actual time=6.958..16.400 rows=45000 loops=2)
+                           Hash Cond: (ar.evidence_id = e.evidence_id)
+                           Buffers: shared hit=3101
+                           ->  Parallel Seq Scan on analysis_requests ar  (cost=0.00..1764.76 rows=52941 width=23) (actual time=0.004..3.718 rows=45000 loops=2)
+                                 Filter: (requested_by = 1)
+                                 Buffers: shared hit=1103
+                           ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.602..6.603 rows=30000 loops=2)
+                                 Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+                                 Buffers: shared hit=1936
+                                 ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.005..3.811 rows=30000 loops=2)
+                                       Filter: (deleted_at IS NULL)
+                                       Buffers: shared hit=1936
+                     ->  Hash  (cost=168.00..168.00 rows=7500 width=13) (actual time=1.333..1.333 rows=7500 loops=2)
+                           Buckets: 8192  Batches: 1  Memory Usage: 416kB
+                           Buffers: shared hit=186
+                           ->  Seq Scan on analysis_results r  (cost=0.00..168.00 rows=7500 width=13) (actual time=0.017..0.541 rows=7500 loops=2)
+                                 Buffers: shared hit=186
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.235 ms
+ Execution Time: 30.041 ms
+(32 rows)
+
+             measurement
+--------------------------------------
+ RUN 2 EXISTING Q1 totalAnalysisCount
+(1 row)
+
+                                                              QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=4332.28..4332.29 rows=1 width=8) (actual time=25.031..25.034 rows=1 loops=1)
+   Buffers: shared hit=2071
+   ->  Hash Join  (cost=1643.00..4107.28 rows=90000 width=8) (actual time=5.950..21.781 rows=90000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=2071
+         ->  Seq Scan on analysis_requests ar  (cost=0.00..2228.00 rows=90000 width=16) (actual time=0.004..6.209 rows=90000 loops=1)
+               Filter: (requested_by = 1)
+               Buffers: shared hit=1103
+         ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=5.898..5.900 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=968
+               ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.510 rows=30000 loops=1)
+                     Filter: (deleted_at IS NULL)
+                     Buffers: shared hit=968
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.126 ms
+ Execution Time: 25.180 ms
+(18 rows)
+
+               measurement
+-----------------------------------------
+ RUN 2 EXISTING Q2 deepfakeDetectedCount
+(1 row)
+
+                                                                          QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1930.76..1930.77 rows=1 width=8) (actual time=7.244..7.245 rows=1 loops=1)
+   Buffers: shared hit=15463
+   ->  Nested Loop  (cost=335.54..1929.72 rows=414 width=8) (actual time=1.213..7.054 rows=5000 loops=1)
+         Buffers: shared hit=15463
+         ->  Hash Join  (cost=335.25..1569.48 rows=414 width=16) (actual time=1.204..2.840 rows=5000 loops=1)
+               Hash Cond: (ar.analysis_request_id = r.analysis_request_id)
+               Buffers: shared hit=463
+               ->  Bitmap Heap Scan on analysis_requests ar  (cost=86.00..1300.69 rows=7446 width=16) (actual time=0.142..1.062 rows=7500 loops=1)
+                     Recheck Cond: ((status)::text = 'COMPLETED'::text)
+                     Filter: (requested_by = 1)
+                     Heap Blocks: exact=363
+                     Buffers: shared hit=370
+                     ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..84.14 rows=7446 width=0) (actual time=0.116..0.116 rows=7500 loops=1)
+                           Index Cond: ((status)::text = 'COMPLETED'::text)
+                           Buffers: shared hit=7
+               ->  Hash  (cost=186.75..186.75 rows=5000 width=8) (actual time=1.050..1.051 rows=5000 loops=1)
+                     Buckets: 8192  Batches: 1  Memory Usage: 260kB
+                     Buffers: shared hit=93
+                     ->  Seq Scan on analysis_results r  (cost=0.00..186.75 rows=5000 width=8) (actual time=0.003..0.639 rows=5000 loops=1)
+                           Filter: ((risk_level)::text = ANY ('{HIGH,MEDIUM}'::text[]))
+                           Rows Removed by Filter: 2500
+                           Buffers: shared hit=93
+         ->  Index Scan using evidences_pkey on evidences e  (cost=0.29..0.87 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=5000)
+               Index Cond: (evidence_id = ar.evidence_id)
+               Filter: (deleted_at IS NULL)
+               Buffers: shared hit=15000
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.227 ms
+ Execution Time: 7.302 ms
+(30 rows)
+
+           measurement
+----------------------------------
+ RUN 2 EXISTING Q3 completedCount
+(1 row)
+
+                                                                          QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=2817.70..2817.71 rows=1 width=8) (actual time=7.774..7.777 rows=1 loops=1)
+   Buffers: shared hit=1338
+   ->  Hash Join  (cost=1393.76..2799.08 rows=7446 width=8) (actual time=1.430..7.460 rows=7500 loops=1)
+         Hash Cond: (e.evidence_id = ar.evidence_id)
+         Buffers: shared hit=1338
+         ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.510 rows=30000 loops=1)
+               Filter: (deleted_at IS NULL)
+               Buffers: shared hit=968
+         ->  Hash  (cost=1300.69..1300.69 rows=7446 width=16) (actual time=1.418..1.420 rows=7500 loops=1)
+               Buckets: 8192  Batches: 1  Memory Usage: 416kB
+               Buffers: shared hit=370
+               ->  Bitmap Heap Scan on analysis_requests ar  (cost=86.00..1300.69 rows=7446 width=16) (actual time=0.121..0.776 rows=7500 loops=1)
+                     Recheck Cond: ((status)::text = 'COMPLETED'::text)
+                     Filter: (requested_by = 1)
+                     Heap Blocks: exact=363
+                     Buffers: shared hit=370
+                     ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..84.14 rows=7446 width=0) (actual time=0.097..0.098 rows=7500 loops=1)
+                           Index Cond: ((status)::text = 'COMPLETED'::text)
+                           Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.112 ms
+ Execution Time: 7.850 ms
+(23 rows)
+
+            measurement
+-----------------------------------
+ RUN 2 EXISTING Q4 inProgressCount
+(1 row)
+
+                                                                        QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=3204.18..3204.19 rows=1 width=8) (actual time=9.802..9.804 rows=1 loops=1)
+   Buffers: shared hit=1345
+   ->  Hash Join  (cost=1805.46..3167.45 rows=14694 width=8) (actual time=6.121..9.198 rows=15000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=1345
+         ->  Bitmap Heap Scan on analysis_requests ar  (cost=162.46..1485.87 rows=14694 width=16) (actual time=0.212..1.727 rows=15000 loops=1)
+               Recheck Cond: ((status)::text = ANY ('{QUEUED,ANALYZING}'::text[]))
+               Filter: (requested_by = 1)
+               Heap Blocks: exact=363
+               Buffers: shared hit=377
+               ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..158.79 rows=14694 width=0) (actual time=0.184..0.185 rows=15000 loops=1)
+                     Index Cond: ((status)::text = ANY ('{QUEUED,ANALYZING}'::text[]))
+                     Buffers: shared hit=14
+         ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=5.871..5.872 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=968
+               ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.454 rows=30000 loops=1)
+                     Filter: (deleted_at IS NULL)
+                     Buffers: shared hit=968
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.149 ms
+ Execution Time: 9.914 ms
+(23 rows)
+
+             measurement
+--------------------------------------
+ RUN 3 EXISTING Q1 totalAnalysisCount
+(1 row)
+
+                                                              QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=4332.28..4332.29 rows=1 width=8) (actual time=25.190..25.193 rows=1 loops=1)
+   Buffers: shared hit=2071
+   ->  Hash Join  (cost=1643.00..4107.28 rows=90000 width=8) (actual time=6.131..21.872 rows=90000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=2071
+         ->  Seq Scan on analysis_requests ar  (cost=0.00..2228.00 rows=90000 width=16) (actual time=0.003..6.168 rows=90000 loops=1)
+               Filter: (requested_by = 1)
+               Buffers: shared hit=1103
+         ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.092..6.093 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=968
+               ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.546 rows=30000 loops=1)
+                     Filter: (deleted_at IS NULL)
+                     Buffers: shared hit=968
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.114 ms
+ Execution Time: 25.332 ms
+(18 rows)
+
+               measurement
+-----------------------------------------
+ RUN 3 EXISTING Q2 deepfakeDetectedCount
+(1 row)
+
+                                                                          QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=1930.76..1930.77 rows=1 width=8) (actual time=6.976..6.976 rows=1 loops=1)
+   Buffers: shared hit=15463
+   ->  Nested Loop  (cost=335.54..1929.72 rows=414 width=8) (actual time=1.223..6.787 rows=5000 loops=1)
+         Buffers: shared hit=15463
+         ->  Hash Join  (cost=335.25..1569.48 rows=414 width=16) (actual time=1.215..2.702 rows=5000 loops=1)
+               Hash Cond: (ar.analysis_request_id = r.analysis_request_id)
+               Buffers: shared hit=463
+               ->  Bitmap Heap Scan on analysis_requests ar  (cost=86.00..1300.69 rows=7446 width=16) (actual time=0.143..0.925 rows=7500 loops=1)
+                     Recheck Cond: ((status)::text = 'COMPLETED'::text)
+                     Filter: (requested_by = 1)
+                     Heap Blocks: exact=363
+                     Buffers: shared hit=370
+                     ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..84.14 rows=7446 width=0) (actual time=0.117..0.117 rows=7500 loops=1)
+                           Index Cond: ((status)::text = 'COMPLETED'::text)
+                           Buffers: shared hit=7
+               ->  Hash  (cost=186.75..186.75 rows=5000 width=8) (actual time=1.061..1.061 rows=5000 loops=1)
+                     Buckets: 8192  Batches: 1  Memory Usage: 260kB
+                     Buffers: shared hit=93
+                     ->  Seq Scan on analysis_results r  (cost=0.00..186.75 rows=5000 width=8) (actual time=0.003..0.656 rows=5000 loops=1)
+                           Filter: ((risk_level)::text = ANY ('{HIGH,MEDIUM}'::text[]))
+                           Rows Removed by Filter: 2500
+                           Buffers: shared hit=93
+         ->  Index Scan using evidences_pkey on evidences e  (cost=0.29..0.87 rows=1 width=8) (actual time=0.001..0.001 rows=1 loops=5000)
+               Index Cond: (evidence_id = ar.evidence_id)
+               Filter: (deleted_at IS NULL)
+               Buffers: shared hit=15000
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.233 ms
+ Execution Time: 7.031 ms
+(30 rows)
+
+           measurement
+----------------------------------
+ RUN 3 EXISTING Q3 completedCount
+(1 row)
+
+                                                                          QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=2817.70..2817.71 rows=1 width=8) (actual time=7.646..7.649 rows=1 loops=1)
+   Buffers: shared hit=1338
+   ->  Hash Join  (cost=1393.76..2799.08 rows=7446 width=8) (actual time=1.402..7.310 rows=7500 loops=1)
+         Hash Cond: (e.evidence_id = ar.evidence_id)
+         Buffers: shared hit=1338
+         ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.445 rows=30000 loops=1)
+               Filter: (deleted_at IS NULL)
+               Buffers: shared hit=968
+         ->  Hash  (cost=1300.69..1300.69 rows=7446 width=16) (actual time=1.390..1.392 rows=7500 loops=1)
+               Buckets: 8192  Batches: 1  Memory Usage: 416kB
+               Buffers: shared hit=370
+               ->  Bitmap Heap Scan on analysis_requests ar  (cost=86.00..1300.69 rows=7446 width=16) (actual time=0.116..0.768 rows=7500 loops=1)
+                     Recheck Cond: ((status)::text = 'COMPLETED'::text)
+                     Filter: (requested_by = 1)
+                     Heap Blocks: exact=363
+                     Buffers: shared hit=370
+                     ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..84.14 rows=7446 width=0) (actual time=0.092..0.092 rows=7500 loops=1)
+                           Index Cond: ((status)::text = 'COMPLETED'::text)
+                           Buffers: shared hit=7
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.099 ms
+ Execution Time: 7.718 ms
+(23 rows)
+
+            measurement
+-----------------------------------
+ RUN 3 EXISTING Q4 inProgressCount
+(1 row)
+
+                                                                        QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=3204.18..3204.19 rows=1 width=8) (actual time=10.038..10.040 rows=1 loops=1)
+   Buffers: shared hit=1345
+   ->  Hash Join  (cost=1805.46..3167.45 rows=14694 width=8) (actual time=6.402..9.474 rows=15000 loops=1)
+         Hash Cond: (ar.evidence_id = e.evidence_id)
+         Buffers: shared hit=1345
+         ->  Bitmap Heap Scan on analysis_requests ar  (cost=162.46..1485.87 rows=14694 width=16) (actual time=0.226..1.744 rows=15000 loops=1)
+               Recheck Cond: ((status)::text = ANY ('{QUEUED,ANALYZING}'::text[]))
+               Filter: (requested_by = 1)
+               Heap Blocks: exact=363
+               Buffers: shared hit=377
+               ->  Bitmap Index Scan on idx_analysis_requests_status  (cost=0.00..158.79 rows=14694 width=0) (actual time=0.200..0.200 rows=15000 loops=1)
+                     Index Cond: ((status)::text = ANY ('{QUEUED,ANALYZING}'::text[]))
+                     Buffers: shared hit=14
+         ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.137..6.138 rows=30000 loops=1)
+               Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+               Buffers: shared hit=968
+               ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.002..3.737 rows=30000 loops=1)
+                     Filter: (deleted_at IS NULL)
+                     Buffers: shared hit=968
+ Planning:
+   Buffers: shared hit=12
+ Planning Time: 0.136 ms
+ Execution Time: 10.156 ms
+(23 rows)
+
+   measurement
+-----------------
+ RUN 3 AGGREGATE
+(1 row)
+
+                                                                           QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Finalize Aggregate  (cost=6006.43..6006.44 rows=1 width=32) (actual time=28.166..29.403 rows=1 loops=1)
+   Buffers: shared hit=3290
+   ->  Gather  (cost=6006.31..6006.42 rows=1 width=32) (actual time=27.902..29.398 rows=2 loops=1)
+         Workers Planned: 1
+         Workers Launched: 1
+         Buffers: shared hit=3290
+         ->  Partial Aggregate  (cost=5006.31..5006.32 rows=1 width=32) (actual time=25.905..25.907 rows=1 loops=2)
+               Buffers: shared hit=3290
+               ->  Hash Left Join  (cost=1904.75..3947.49 rows=52941 width=12) (actual time=7.532..21.454 rows=45000 loops=2)
+                     Hash Cond: (ar.analysis_request_id = r.analysis_request_id)
+                     Buffers: shared hit=3287
+                     ->  Hash Join  (cost=1643.00..3546.76 rows=52941 width=15) (actual time=6.348..15.582 rows=45000 loops=2)
+                           Hash Cond: (ar.evidence_id = e.evidence_id)
+                           Buffers: shared hit=3101
+                           ->  Parallel Seq Scan on analysis_requests ar  (cost=0.00..1764.76 rows=52941 width=23) (actual time=0.006..3.768 rows=45000 loops=2)
+                                 Filter: (requested_by = 1)
+                                 Buffers: shared hit=1103
+                           ->  Hash  (cost=1268.00..1268.00 rows=30000 width=8) (actual time=6.239..6.239 rows=30000 loops=2)
+                                 Buckets: 32768  Batches: 1  Memory Usage: 1428kB
+                                 Buffers: shared hit=1936
+                                 ->  Seq Scan on evidences e  (cost=0.00..1268.00 rows=30000 width=8) (actual time=0.006..3.632 rows=30000 loops=2)
+                                       Filter: (deleted_at IS NULL)
+                                       Buffers: shared hit=1936
+                     ->  Hash  (cost=168.00..168.00 rows=7500 width=13) (actual time=1.164..1.165 rows=7500 loops=2)
+                           Buckets: 8192  Batches: 1  Memory Usage: 416kB
+                           Buffers: shared hit=186
+                           ->  Seq Scan on analysis_results r  (cost=0.00..168.00 rows=7500 width=13) (actual time=0.011..0.478 rows=7500 loops=2)
+                                 Buffers: shared hit=186
+ Planning:
+   Buffers: shared hit=24
+ Planning Time: 0.209 ms
+ Execution Time: 29.551 ms
+(32 rows)

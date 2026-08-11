@@ -1,0 +1,4 @@
+total_requests	requests_a	requests_b	aggregate_calls_total	aggregate_calls_a	aggregate_calls_b	aggregate_exec_total_ms	p50_ms	p95_ms	p99_ms	mean_ms	throughput_rps	failure_rate
+2	1	1	2	1	1	99.050	289.827	346.5981	351.64442	289.827	5.584985	0.00%
+10	5	5	2	1	1	108.214	381.8285	430.9293	431.06826	381.8377	22.972346	0.00%
+30	15	15	2	1	1	223.474	1381.064	1503.3616	1503.54556	1380.153067	19.890984	0.00%

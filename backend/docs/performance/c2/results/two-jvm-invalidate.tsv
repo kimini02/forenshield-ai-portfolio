@@ -1,0 +1,2 @@
+executed	db_actual	a_response	b_response	stale_duration	reason
+no	NOT_MEASURED	NOT_MEASURED	NOT_MEASURED	NOT_MEASURED	Normal analysis mutation can trigger asynchronous worker, S3 copy/manifest, custody, and notification side effects; deterministic full rollback was not guaranteed.

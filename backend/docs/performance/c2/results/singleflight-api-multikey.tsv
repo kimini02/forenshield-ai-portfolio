@@ -1,0 +1,2 @@
+distinct_keys	requests	aggregate_calls	aggregate_total_exec_ms	aggregate_mean_exec_ms	p50_ms	p95_ms	p99_ms	mean_ms	throughput_rps	failure_rate	result_per_key
+4	4	4	83.297	20.824	144.269	144.40065	144.40653	144.27475	26.956721	0.00%	3000/167/250/500

@@ -1,0 +1,5 @@
+metric	existing_count	aggregate_count	is_equal
+totalAnalysisCount	90000	90000	true
+deepfakeDetectedCount	5000	5000	true
+completedCount	7500	7500	true
+inProgressCount	15000	15000	true

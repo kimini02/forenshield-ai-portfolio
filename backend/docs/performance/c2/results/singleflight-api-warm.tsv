@@ -1,0 +1,2 @@
+requests	p50_ms	p95_ms	p99_ms	mean_ms	throughput_rps	failure_rate	aggregate_calls	auth_user_select_calls
+100	5.7855	11.52215	20.06773	6.55095	148.271158	0.00%	0	100

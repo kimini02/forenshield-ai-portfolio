@@ -1,0 +1,4 @@
+step	redis_state	http_status	api_latency_ms	aggregate_calls_delta	redis_get	redis_set	result
+outage	stopped	200	1691.916	1	failed	failed	90000/5000/7500/15000
+recovered_first	running	200	255.302	1	2	1	90000/5000/7500/15000
+recovered_second	running	200	26.358	0	1	0	90000/5000/7500/15000

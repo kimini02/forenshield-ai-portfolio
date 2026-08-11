@@ -1,0 +1,5 @@
+run	api_latency_ms	redis_get	redis_set	aggregate_calls	aggregate_execution_ms	auth_select	result
+1	865.541	2	1	1	621.352	1	90000/5000/7500/15000
+2	196.903	2	1	1	47.816	1	90000/5000/7500/15000
+3	175.289	2	1	1	32.824	1	90000/5000/7500/15000
+median	196.903	2	1	1	47.816	1	90000/5000/7500/15000

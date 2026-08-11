@@ -1,0 +1,6 @@
+step	port	http_status	latency_ms	stats_count_calls	auth_user_select_calls	result
+A Cold	18080	200	513.699	4	1	90000/5000/7500/15000
+A Warm	18080	200	35.481	0	1	90000/5000/7500/15000
+B Cold	18081	200	440.153	4	1	90000/5000/7500/15000
+B Warm	18081	200	16.849	0	1	90000/5000/7500/15000
+alternating A/B warm (100 requests)	18080/18081	200	p50=5.705;p95=20.6985;p99=72.50887	0	100	failure=0%;throughput=86.734331rps

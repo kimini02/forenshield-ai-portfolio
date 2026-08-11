@@ -1,0 +1,16 @@
+The following normalized SQL text was captured from pg_stat_statements after a real cache MISS.
+
+[totalAnalysisCount]
+select count(ar1_0.analysis_request_id) from analysis_requests ar1_0 join evidences e1_0 on e1_0.evidence_id=ar1_0.evidence_id where ar1_0.requested_by=$1 and e1_0.deleted_at is null
+
+[deepfakeDetectedCount]
+select count(ar1_0.analysis_request_id) from analysis_requests ar1_0 join evidences e1_0 on e1_0.evidence_id=ar1_0.evidence_id join analysis_results ar2_0 on ar2_0.analysis_request_id=ar1_0.analysis_request_id where ar1_0.requested_by=$1 and e1_0.deleted_at is null and ar1_0.status=$2 and ar2_0.risk_level in ($3,$4)
+
+[completedCount]
+select count(ar1_0.analysis_request_id) from analysis_requests ar1_0 join evidences e1_0 on e1_0.evidence_id=ar1_0.evidence_id where ar1_0.requested_by=$1 and e1_0.deleted_at is null and ar1_0.status=$2
+
+[inProgressCount]
+select count(ar1_0.analysis_request_id) from analysis_requests ar1_0 join evidences e1_0 on e1_0.evidence_id=ar1_0.evidence_id where ar1_0.requested_by=$1 and e1_0.deleted_at is null and ar1_0.status in ($2,$3)
+
+[authentication user lookup]
+select u1_0.user_id,u1_0.created_at,u1_0.dark_mode,u1_0.deleted_at,u1_0.department,u1_0.email,u1_0.invite_code_id,u1_0.login_id,u1_0.name,u1_0.organization_type,u1_0.password,u1_0.phone,u1_0.position,u1_0.role,u1_0.status,u1_0.updated_at from users u1_0 where u1_0.login_id=$1 and u1_0.deleted_at is null

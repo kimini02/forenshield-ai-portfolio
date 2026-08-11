@@ -29,55 +29,30 @@ public interface AnalysisRequestRepository extends JpaRepository<AnalysisRequest
 
     void deleteByEvidenceId(Long evidenceId);
 
-    @Query("""
-            SELECT COUNT(ar)
-            FROM AnalysisRequest ar
-            JOIN Evidence e ON e.evidenceId = ar.evidenceId
-            WHERE ar.requestedBy = :uploaderId
-              AND e.deletedAt IS NULL
-            """)
-    long countTotalByUploader(@Param("uploaderId") Long uploaderId);
-
-    @Query("""
-            SELECT COUNT(ar)
-            FROM AnalysisRequest ar
-            JOIN Evidence e ON e.evidenceId = ar.evidenceId
-            WHERE ar.requestedBy = :uploaderId
-              AND e.deletedAt IS NULL
-              AND ar.status = :status
-            """)
-    long countByUploaderAndStatus(
-            @Param("uploaderId") Long uploaderId,
-            @Param("status") AnalysisStatus status
+    @Query(value = """
+            SELECT
+                COUNT(*) AS "totalAnalysisCount",
+                COUNT(*) FILTER (
+                    WHERE ar.status = 'COMPLETED'
+                      AND r.risk_level IN ('HIGH', 'MEDIUM')
+                ) AS "deepfakeDetectedCount",
+                COUNT(*) FILTER (
+                    WHERE ar.status = 'COMPLETED'
+                ) AS "completedCount",
+                COUNT(*) FILTER (
+                    WHERE ar.status IN ('QUEUED', 'ANALYZING')
+                ) AS "inProgressCount"
+            FROM analysis_requests ar
+            JOIN evidences e
+              ON e.evidence_id = ar.evidence_id
+            LEFT JOIN analysis_results r
+              ON r.analysis_request_id = ar.analysis_request_id
+            WHERE ar.requested_by = :uploaderId
+              AND e.deleted_at IS NULL
+            """, nativeQuery = true)
+    DashboardStatsProjection findDashboardStatsByUploader(
+            @Param("uploaderId") Long uploaderId
     );
-
-    @Query("""
-            SELECT COUNT(ar)
-            FROM AnalysisRequest ar
-            JOIN Evidence e ON e.evidenceId = ar.evidenceId
-            WHERE ar.requestedBy = :uploaderId
-              AND e.deletedAt IS NULL
-              AND ar.status IN :statuses
-            """)
-    long countByUploaderAndStatusIn(
-            @Param("uploaderId") Long uploaderId,
-            @Param("statuses") List<AnalysisStatus> statuses
-    );
-
-    @Query("""
-            SELECT COUNT(ar)
-            FROM AnalysisRequest ar
-            JOIN Evidence e ON e.evidenceId = ar.evidenceId
-            JOIN AnalysisResult r ON r.analysisRequestId = ar.analysisRequestId
-            WHERE ar.requestedBy = :uploaderId
-              AND e.deletedAt IS NULL
-              AND ar.status = com.example.demo.domain.enums.AnalysisStatus.COMPLETED
-              AND r.riskLevel IN (
-                  com.example.demo.domain.enums.RiskLevel.HIGH,
-                  com.example.demo.domain.enums.RiskLevel.MEDIUM
-              )
-            """)
-    long countDeepfakeDetectedByUploader(@Param("uploaderId") Long uploaderId);
 
     @Query("""
             SELECT COUNT(ar)
