@@ -1,0 +1,5 @@
+run	existing_q1_ms	existing_q2_ms	existing_q3_ms	existing_q4_ms	existing_total_exec_ms	existing_total_planning_ms	existing_shared_hit	aggregate_exec_ms	aggregate_planning_ms	aggregate_shared_hit	shared_read	temp_read_write
+1	29.043	7.460	7.906	10.332	54.741	0.659	20217	30.768	0.212	3290	0	0
+2	25.180	7.302	7.850	9.914	50.246	0.614	20217	30.041	0.235	3290	0	0
+3	25.332	7.031	7.718	10.156	50.237	0.582	20217	29.551	0.209	3290	0	0
+median	25.332	7.302	7.850	10.156	50.246	0.614	20217	30.041	0.212	3290	0	0

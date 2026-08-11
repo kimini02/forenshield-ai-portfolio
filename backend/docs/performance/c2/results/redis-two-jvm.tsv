@@ -1,0 +1,3 @@
+step	port	api_latency_ms	redis_get_delta	redis_set_delta	aggregate_a_delta	aggregate_b_delta	result
+A_first_request	18080	713.148	2	1	1	0	90000/5000/7500/15000
+B_first_request	18081	746.258	1	0	0	0	90000/5000/7500/15000

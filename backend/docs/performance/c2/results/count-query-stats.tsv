@@ -1,0 +1,17 @@
+run	query	calls	total_exec_ms	mean_exec_ms
+1	totalAnalysisCount	1	152.356	152.356
+1	deepfakeDetectedCount	1	9.332	9.332
+1	completedCount	1	6.156	6.156
+1	inProgressCount	1	7.853	7.853
+2	totalAnalysisCount	1	39.321	39.321
+2	deepfakeDetectedCount	1	7.857	7.857
+2	completedCount	1	6.323	6.323
+2	inProgressCount	1	7.969	7.969
+3	totalAnalysisCount	1	36.505	36.505
+3	deepfakeDetectedCount	1	8.673	8.673
+3	completedCount	1	6.252	6.252
+3	inProgressCount	1	7.104	7.104
+median	totalAnalysisCount	1	39.321	39.321
+median	deepfakeDetectedCount	1	8.673	8.673
+median	completedCount	1	6.252	6.252
+median	inProgressCount	1	7.853	7.853

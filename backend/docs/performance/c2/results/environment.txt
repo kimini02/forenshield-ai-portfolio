@@ -1,0 +1,33 @@
+C2 dashboard stats Before measurement
+measurement date: 2026-08-10 (Asia/Seoul)
+backend SHA: 39317431f025a780fa25f74fd23fbb332b559bed
+infra SHA: ccbfbb41ae90719115a4018f78e4db3205e52372
+OS: macOS 26.4.1 (arm64, Apple M1)
+JDK: OpenJDK 22.0.2
+JVM: -Xms256m -Xmx1024m
+Spring Boot: 3.5.14
+PostgreSQL: 16.13, postgres:16-alpine
+PostgreSQL: pg_stat_statements enabled, track_io_timing=on, work_mem=4MB
+isolated database: forenshield_c2 on localhost:55433
+STEP 2E Redis: Redis 7.4.10, redis:7.4-alpine, isolated container on localhost:56379
+backend instances: 1 for Cold/Warm/concurrent MISS; 2 for local-cache isolation
+backend ports: 18080 (A), 18081 (B)
+cache TTL: 30 seconds
+test user: user_id=1, login_id=c2-user, ROLE_USER, APPROVED
+evidences: 30000
+deleted evidences: 0
+analysis requests: 90000
+QUEUED: 7500
+ANALYZING: 7500
+COMPLETED: 7500
+FAILED: 67500
+analysis results: 7500
+HIGH: 2500
+MEDIUM: 2500
+LOW: 2500
+expected API result: total=90000, deepfake=5000, completed=7500, inProgress=15000
+schema preparation: repository SQL migrations, followed once by Hibernate ddl-auto=update
+measurement runs: Hibernate ddl-auto=validate
+measurement-only settings: refresh disabled, stale analysis reaper disabled
+final decision measurement date: 2026-08-11 (Asia/Seoul)
+final decision structure: Aggregate Query 1 + JVM Local Cache + uploaderId Local Single-flight + TTL 30 seconds

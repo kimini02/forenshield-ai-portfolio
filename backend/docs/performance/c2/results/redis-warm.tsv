@@ -1,0 +1,5 @@
+cache	requests	p50_ms	p95_ms	p99_ms	average_ms	throughput_rps	failure_rate	redis_get	aggregate_calls	auth_select
+redis_single_jvm	100	12.1415	27.3321	52.47583	17.1639	56.937719	0%	100	0	100
+local_single_jvm_step2c	100	5.7855	11.52215	20.06773	6.55095	148.271158	0%	n/a	0	100
+redis_two_jvm_alternating	100	9.2345	21.72535	542.71058	22.93032	43.032167	0%	100	0	100
+local_two_jvm_alternating_step2d	100	5.743	10.46925	24.45539	not_recorded	not_recorded	0%	n/a	0	100

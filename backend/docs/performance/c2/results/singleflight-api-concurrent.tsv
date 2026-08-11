@@ -1,0 +1,5 @@
+vus	requests	step2b_aggregate_calls	singleflight_aggregate_calls	step2b_p50_ms	singleflight_p50_ms	step2b_p95_ms	singleflight_p95_ms	step2b_p99_ms	singleflight_p99_ms	singleflight_failure_rate	singleflight_aggregate_exec_ms
+1	1	1	1	169.279	154.430	169.279	154.430	169.279	154.430	0.00%	45.506
+5	5	5	1	222.373	229.321	222.9162	229.7938	223.02164	229.88596	0.00%	86.728
+10	10	10	1	694.450	148.0245	748.72525	148.97505	756.38425	149.00781	0.00%	44.181
+30	30	10	1	505.706	203.1185	520.53395	208.0603	533.68979	208.27867	0.00%	56.503

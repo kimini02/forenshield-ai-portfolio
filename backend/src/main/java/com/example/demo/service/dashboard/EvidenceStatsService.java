@@ -13,6 +13,7 @@ import com.example.demo.dto.RecentAnalysisResponse;
 import com.example.demo.exception.BusinessException;
 import com.example.demo.repository.AnalysisRequestRepository;
 import com.example.demo.repository.AnalysisResultRepository;
+import com.example.demo.repository.DashboardStatsProjection;
 import com.example.demo.repository.EvidenceRepository;
 import com.example.demo.util.ApiDateTimeFormatter;
 import com.example.demo.util.EvidenceCaseIdResolver;
@@ -22,6 +23,10 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -41,6 +46,9 @@ public class EvidenceStatsService {
     private static final int MIN_RECENT_LIMIT = 3;
     private static final int MAX_RECENT_LIMIT = 5;
 
+    private final ConcurrentMap<Long, CompletableFuture<EvidenceStatsResponse>> dashboardStatsInFlight
+            = new ConcurrentHashMap<>();
+
     private final AnalysisRequestRepository analysisRequestRepository;
     private final AnalysisResultRepository analysisResultRepository;
     private final EvidenceRepository evidenceRepository;
@@ -53,16 +61,55 @@ public class EvidenceStatsService {
             return cached;
         }
 
-        EvidenceStatsResponse response = EvidenceStatsResponse.builder()
-                .totalAnalysisCount(analysisRequestRepository.countTotalByUploader(uploaderId))
-                .deepfakeDetectedCount(analysisRequestRepository.countDeepfakeDetectedByUploader(uploaderId))
-                .completedCount(analysisRequestRepository.countByUploaderAndStatus(
-                        uploaderId, AnalysisStatus.COMPLETED))
-                .inProgressCount(analysisRequestRepository.countByUploaderAndStatusIn(
-                        uploaderId, List.of(AnalysisStatus.QUEUED, AnalysisStatus.ANALYZING)))
-                .build();
-        dashboardStatsCache.put(uploaderId, response);
-        return response;
+        CompletableFuture<EvidenceStatsResponse> computation = new CompletableFuture<>();
+        CompletableFuture<EvidenceStatsResponse> existing = dashboardStatsInFlight.putIfAbsent(
+                uploaderId, computation
+        );
+        if (existing != null) {
+            return awaitDashboardStats(existing);
+        }
+
+        try {
+            EvidenceStatsResponse refreshed = dashboardStatsCache.get(uploaderId);
+            if (refreshed != null) {
+                computation.complete(refreshed);
+                return refreshed;
+            }
+
+            DashboardStatsProjection stats = analysisRequestRepository
+                    .findDashboardStatsByUploader(uploaderId);
+            EvidenceStatsResponse response = EvidenceStatsResponse.builder()
+                    .totalAnalysisCount(stats.getTotalAnalysisCount())
+                    .deepfakeDetectedCount(stats.getDeepfakeDetectedCount())
+                    .completedCount(stats.getCompletedCount())
+                    .inProgressCount(stats.getInProgressCount())
+                    .build();
+            dashboardStatsCache.put(uploaderId, response);
+            computation.complete(response);
+            return response;
+        } catch (RuntimeException | Error exception) {
+            computation.completeExceptionally(exception);
+            throw exception;
+        } finally {
+            dashboardStatsInFlight.remove(uploaderId, computation);
+        }
+    }
+
+    private EvidenceStatsResponse awaitDashboardStats(
+            CompletableFuture<EvidenceStatsResponse> computation
+    ) {
+        try {
+            return computation.join();
+        } catch (CompletionException exception) {
+            Throwable cause = exception.getCause();
+            if (cause instanceof RuntimeException runtimeException) {
+                throw runtimeException;
+            }
+            if (cause instanceof Error error) {
+                throw error;
+            }
+            throw new IllegalStateException("Dashboard stats computation failed", cause);
+        }
     }
 
     /** RQ-DSH-044: 최근 N일 일별 완료 분석 건수 (꺾은선 차트용) */
