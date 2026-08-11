@@ -97,6 +97,56 @@ Next.js → Spring Boot → PostgreSQL / S3 / RabbitMQ → AI Worker
 
 ---
 
+## 실행 방법
+
+### 사전 준비
+
+`Node.js 20+` · `pnpm` · `JDK 17` · `Python 3` · `FFmpeg`
+
+```bash
+git clone https://github.com/kimini02/forenshield-ai-portfolio.git
+cd forenshield-ai-portfolio
+```
+
+각 서비스는 별도 터미널에서 실행합니다.
+
+### 01. Backend
+
+```bash
+cd backend
+JWT_SECRET_KEY=local-development-only-secret-key-32bytes ./gradlew bootRun
+```
+
+### 02. AI Server
+
+```bash
+cd ai
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env
+uvicorn app.main:app --port 8000
+```
+
+### 03. Frontend
+
+```bash
+cd frontend
+cp .env.example .env.local
+pnpm install
+pnpm dev
+```
+
+| Service | URL |
+|---|---|
+| Web | `http://localhost:3000` |
+| Backend Swagger | `http://localhost:8080/swagger-ui/index.html` |
+| AI Swagger | `http://localhost:8000/docs` |
+
+> 기본 로컬 프로필은 H2, 로컬 분석 모드, simulated 블록체인 앵커를 사용합니다. 운영 환경에서는 PostgreSQL, Redis, RabbitMQ, S3 설정이 추가로 필요합니다.
+
+---
+
 ## 서비스 구현 화면
 
 ### 01. 사건 및 영상 증거 등록 · 무결성 검증
