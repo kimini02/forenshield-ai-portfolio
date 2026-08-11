@@ -1,0 +1,566 @@
+Pager usage is off.
+CREATE VIEW
+=== PAGE CONTENT: owner=1, newest, offset=0, size=10 ===
+                                                                                                                    QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=33151.14..33151.17 rows=10 width=48) (actual time=262.267..262.278 rows=10 loops=1)
+   Buffers: shared hit=121571, temp read=734 written=734
+   I/O Timings: temp read=0.765 write=27.459
+   ->  Sort  (cost=33151.14..33175.77 rows=9851 width=48) (actual time=262.266..262.276 rows=10 loops=1)
+         Sort Key: c1_candidates.created_at DESC, c1_candidates.case_key
+         Sort Method: top-N heapsort  Memory: 26kB
+         Buffers: shared hit=121571, temp read=734 written=734
+         I/O Timings: temp read=0.765 write=27.459
+         ->  Subquery Scan on c1_candidates  (cost=31519.98..32938.27 rows=9851 width=48) (actual time=207.175..260.818 rows=10000 loops=1)
+               Buffers: shared hit=121568, temp read=734 written=734
+               I/O Timings: temp read=0.765 write=27.459
+               ->  Subquery Scan on candidates  (cost=31519.98..32839.76 rows=9851 width=164) (actual time=207.174..260.146 rows=10000 loops=1)
+                     Buffers: shared hit=121568, temp read=734 written=734
+                     I/O Timings: temp read=0.765 write=27.459
+                     CTE case_evidence
+                       ->  Hash Left Join  (cost=12749.31..14987.31 rows=30000 width=99) (actual time=63.740..82.581 rows=30000 loops=1)
+                             Hash Cond: (e.evidence_id = lr.evidence_id)
+                             Buffers: shared hit=91291
+                             ->  Seq Scan on evidences e  (cost=0.00..1446.00 rows=30000 width=75) (actual time=0.011..9.110 rows=30000 loops=1)
+                                   Filter: ((deleted_at IS NULL) AND ((status)::text = 'UPLOADED'::text))
+                                   Buffers: shared hit=1071
+                             ->  Hash  (cost=12743.68..12743.68 rows=450 width=15) (actual time=63.676..63.678 rows=30000 loops=1)
+                                   Buckets: 32768 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 1780kB
+                                   Buffers: shared hit=90220
+                                   ->  Subquery Scan on lr  (cost=0.56..12743.68 rows=450 width=15) (actual time=0.272..59.080 rows=30000 loops=1)
+                                         Filter: (lr.request_rank = 1)
+                                         Buffers: shared hit=90220
+                                         ->  WindowAgg  (cost=0.56..11618.68 rows=90000 width=39) (actual time=0.271..56.889 rows=30000 loops=1)
+                                               Run Condition: (row_number() OVER (?) <= 1)
+                                               Buffers: shared hit=90220
+                                               ->  Incremental Sort  (cost=0.56..9818.68 rows=90000 width=31) (actual time=0.258..42.820 rows=90000 loops=1)
+                                                     Sort Key: ar.evidence_id, ar.requested_at DESC, ar.analysis_request_id DESC
+                                                     Presorted Key: ar.evidence_id
+                                                     Full-sort Groups: 2728  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+                                                     Buffers: shared hit=90220
+                                                     ->  Index Scan using idx_analysis_requests_evidence_id on analysis_requests ar  (cost=0.29..7380.37 rows=90000 width=31) (actual time=0.045..29.567 rows=90000 loops=1)
+                                                           Buffers: shared hit=90220
+                     CTE positioned_evidence
+                       ->  WindowAgg  (cost=14111.40..14786.40 rows=30000 width=860) (actual time=128.280..136.740 rows=30000 loops=1)
+                             Buffers: shared hit=91294, temp written=344
+                             I/O Timings: temp write=2.260
+                             ->  Sort  (cost=14111.40..14186.40 rows=30000 width=852) (actual time=128.270..129.243 rows=30000 loops=1)
+                                   Sort Key: ce_1.owner_id, ce_1.case_key, ce_1.evidence_id
+                                   Sort Method: quicksort  Memory: 4005kB
+                                   Buffers: shared hit=91294, temp written=344
+                                   I/O Timings: temp write=2.260
+                                   ->  CTE Scan on case_evidence ce_1  (cost=0.00..600.00 rows=30000 width=852) (actual time=63.741..94.662 rows=30000 loops=1)
+                                         Buffers: shared hit=91291, temp written=344
+                                         I/O Timings: temp write=2.260
+                     ->  Append  (cost=1746.27..2967.54 rows=9851 width=164) (actual time=207.173..259.342 rows=10000 loops=1)
+                           Buffers: shared hit=121568, temp read=734 written=734
+                           I/O Timings: temp read=0.765 write=27.459
+                           ->  Nested Loop Left Join  (cost=1746.27..1760.37 rows=1 width=164) (actual time=207.172..243.977 rows=10000 loops=1)
+                                 Buffers: shared hit=121434, temp read=389 written=733
+                                 I/O Timings: temp read=0.351 write=27.441
+                                 ->  Merge Join  (cost=1745.99..1755.20 rows=1 width=802) (actual time=207.099..226.587 rows=10000 loops=1)
+                                       Merge Cond: (positioned_evidence.case_key = rr.case_key)
+                                       Buffers: shared hit=91431, temp read=389 written=733
+                                       I/O Timings: temp read=0.351 write=27.441
+                                       ->  GroupAggregate  (cost=680.42..682.98 rows=106 width=52) (actual time=176.466..181.758 rows=10000 loops=1)
+                                             Group Key: positioned_evidence.case_key
+                                             Buffers: shared hit=91294, temp written=732
+                                             I/O Timings: temp write=27.438
+                                             ->  Sort  (cost=680.42..680.80 rows=150 width=52) (actual time=176.461..177.460 rows=30000 loops=1)
+                                                   Sort Key: positioned_evidence.case_key
+                                                   Sort Method: quicksort  Memory: 2644kB
+                                                   Buffers: shared hit=91294, temp written=732
+                                                   I/O Timings: temp write=27.438
+                                                   ->  CTE Scan on positioned_evidence  (cost=0.00..675.00 rows=150 width=52) (actual time=128.282..170.725 rows=30000 loops=1)
+                                                         Filter: (owner_id = 1)
+                                                         Buffers: shared hit=91294, temp written=732
+                                                         I/O Timings: temp write=27.438
+                                       ->  Materialize  (cost=1065.57..1071.94 rows=1 width=790) (actual time=30.630..41.590 rows=10000 loops=1)
+                                             Buffers: shared hit=137, temp read=389 written=1
+                                             I/O Timings: temp read=0.351 write=0.003
+                                             ->  Subquery Scan on rr  (cost=1065.57..1071.94 rows=1 width=790) (actual time=30.628..39.435 rows=10000 loops=1)
+                                                   Filter: (rr.representative_rank = 1)
+                                                   Buffers: shared hit=137, temp read=389 written=1
+                                                   I/O Timings: temp read=0.351 write=0.003
+                                                   ->  WindowAgg  (cost=1065.57..1070.07 rows=150 width=802) (actual time=30.628..38.734 rows=10000 loops=1)
+                                                         Run Condition: (row_number() OVER (?) <= 1)
+                                                         Buffers: shared hit=137, temp read=389 written=1
+                                                         I/O Timings: temp read=0.351 write=0.003
+                                                         ->  Sort  (cost=1065.57..1065.94 rows=150 width=794) (actual time=30.619..31.604 rows=30000 loops=1)
+                                                               Sort Key: pe.case_key, (CASE WHEN (cp_1.representative_evidence_id = pe.evidence_id) THEN 0 WHEN ((pe.lifecycle_status)::text = 'ACTIVE'::text) THEN 1 ELSE 2 END), pe.evidence_id
+                                                               Sort Method: quicksort  Memory: 3815kB
+                                                               Buffers: shared hit=137, temp read=389 written=1
+                                                               I/O Timings: temp read=0.351 write=0.003
+                                                               ->  Hash Left Join  (cost=384.00..1060.14 rows=150 width=794) (actual time=5.535..13.798 rows=30000 loops=1)
+                                                                     Hash Cond: (pe.case_key = (cp_1.case_key)::text)
+                                                                     Buffers: shared hit=134, temp read=389 written=1
+                                                                     I/O Timings: temp read=0.351 write=0.003
+                                                                     ->  CTE Scan on positioned_evidence pe  (cost=0.00..675.00 rows=150 width=848) (actual time=0.007..2.608 rows=30000 loops=1)
+                                                                           Filter: (owner_id = 1)
+                                                                           Buffers: temp read=389 written=1
+                                                                           I/O Timings: temp read=0.351 write=0.003
+                                                                     ->  Hash  (cost=259.00..259.00 rows=10000 width=28) (actual time=5.165..5.165 rows=10000 loops=1)
+                                                                           Buckets: 16384  Batches: 1  Memory Usage: 714kB
+                                                                           Buffers: shared hit=134
+                                                                           ->  Seq Scan on case_profiles cp_1  (cost=0.00..259.00 rows=10000 width=28) (actual time=0.016..2.918 rows=10000 loops=1)
+                                                                                 Filter: (uploader_id = 1)
+                                                                                 Buffers: shared hit=134
+                                 ->  Index Scan using uknw9urlatp7qpg6dwr2d4itxh5 on case_profiles cp  (cost=0.29..5.14 rows=1 width=28) (actual time=0.001..0.001 rows=1 loops=10000)
+                                       Index Cond: ((uploader_id = 1) AND ((case_key)::text = positioned_evidence.case_key))
+                                       Buffers: shared hit=30003
+                           ->  Subquery Scan on "*SELECT* 2"  (cost=384.00..1157.92 rows=9850 width=164) (actual time=14.823..14.824 rows=0 loops=1)
+                                 Buffers: shared hit=134, temp read=345 written=1
+                                 I/O Timings: temp read=0.414 write=0.018
+                                 ->  Hash Right Anti Join  (cost=384.00..1059.42 rows=9850 width=608) (actual time=14.823..14.823 rows=0 loops=1)
+                                       Hash Cond: (ce.case_key = (cp_2.case_key)::text)
+                                       Buffers: shared hit=134, temp read=345 written=1
+                                       I/O Timings: temp read=0.414 write=0.018
+                                       ->  CTE Scan on case_evidence ce  (cost=0.00..675.00 rows=150 width=40) (actual time=0.024..2.785 rows=30000 loops=1)
+                                             Filter: (owner_id = 1)
+                                             Buffers: temp read=345 written=1
+                                             I/O Timings: temp read=0.414 write=0.018
+                                       ->  Hash  (cost=259.00..259.00 rows=10000 width=36) (actual time=8.825..8.825 rows=10000 loops=1)
+                                             Buckets: 16384  Batches: 1  Memory Usage: 832kB
+                                             Buffers: shared hit=134
+                                             ->  Seq Scan on case_profiles cp_2  (cost=0.00..259.00 rows=10000 width=36) (actual time=0.007..0.979 rows=10000 loops=1)
+                                                   Filter: (uploader_id = 1)
+                                                   Buffers: shared hit=134
+ Planning:
+   Buffers: shared hit=390
+ Planning Time: 6.003 ms
+ Execution Time: 263.857 ms
+(126 rows)
+
+=== PAGE CONTENT: owner=1, newest, offset=5000, size=10 ===
+                                                                                                                    QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=33604.19..33604.21 rows=10 width=48) (actual time=190.045..190.055 rows=10 loops=1)
+   Buffers: shared hit=121559, temp read=734 written=734
+   I/O Timings: temp read=0.918 write=2.118
+   ->  Sort  (cost=33591.69..33616.31 rows=9851 width=48) (actual time=189.757..189.920 rows=5010 loops=1)
+         Sort Key: c1_candidates.created_at DESC, c1_candidates.case_key
+         Sort Method: quicksort  Memory: 1088kB
+         Buffers: shared hit=121559, temp read=734 written=734
+         I/O Timings: temp read=0.918 write=2.118
+         ->  Subquery Scan on c1_candidates  (cost=31519.98..32938.27 rows=9851 width=48) (actual time=137.486..188.203 rows=10000 loops=1)
+               Buffers: shared hit=121559, temp read=734 written=734
+               I/O Timings: temp read=0.918 write=2.118
+               ->  Subquery Scan on candidates  (cost=31519.98..32839.76 rows=9851 width=164) (actual time=137.486..187.519 rows=10000 loops=1)
+                     Buffers: shared hit=121559, temp read=734 written=734
+                     I/O Timings: temp read=0.918 write=2.118
+                     CTE case_evidence
+                       ->  Hash Left Join  (cost=12749.31..14987.31 rows=30000 width=99) (actual time=49.543..62.129 rows=30000 loops=1)
+                             Hash Cond: (e.evidence_id = lr.evidence_id)
+                             Buffers: shared hit=91291
+                             ->  Seq Scan on evidences e  (cost=0.00..1446.00 rows=30000 width=75) (actual time=0.004..3.927 rows=30000 loops=1)
+                                   Filter: ((deleted_at IS NULL) AND ((status)::text = 'UPLOADED'::text))
+                                   Buffers: shared hit=1071
+                             ->  Hash  (cost=12743.68..12743.68 rows=450 width=15) (actual time=49.528..49.529 rows=30000 loops=1)
+                                   Buckets: 32768 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 1780kB
+                                   Buffers: shared hit=90220
+                                   ->  Subquery Scan on lr  (cost=0.56..12743.68 rows=450 width=15) (actual time=0.036..46.143 rows=30000 loops=1)
+                                         Filter: (lr.request_rank = 1)
+                                         Buffers: shared hit=90220
+                                         ->  WindowAgg  (cost=0.56..11618.68 rows=90000 width=39) (actual time=0.035..43.988 rows=30000 loops=1)
+                                               Run Condition: (row_number() OVER (?) <= 1)
+                                               Buffers: shared hit=90220
+                                               ->  Incremental Sort  (cost=0.56..9818.68 rows=90000 width=31) (actual time=0.033..30.668 rows=90000 loops=1)
+                                                     Sort Key: ar.evidence_id, ar.requested_at DESC, ar.analysis_request_id DESC
+                                                     Presorted Key: ar.evidence_id
+                                                     Full-sort Groups: 2728  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+                                                     Buffers: shared hit=90220
+                                                     ->  Index Scan using idx_analysis_requests_evidence_id on analysis_requests ar  (cost=0.29..7380.37 rows=90000 width=31) (actual time=0.007..18.062 rows=90000 loops=1)
+                                                           Buffers: shared hit=90220
+                     CTE positioned_evidence
+                       ->  WindowAgg  (cost=14111.40..14786.40 rows=30000 width=860) (actual time=100.016..108.472 rows=30000 loops=1)
+                             Buffers: shared hit=91291, temp written=344
+                             I/O Timings: temp write=1.027
+                             ->  Sort  (cost=14111.40..14186.40 rows=30000 width=852) (actual time=100.011..100.968 rows=30000 loops=1)
+                                   Sort Key: ce_1.owner_id, ce_1.case_key, ce_1.evidence_id
+                                   Sort Method: quicksort  Memory: 4005kB
+                                   Buffers: shared hit=91291, temp written=344
+                                   I/O Timings: temp write=1.027
+                                   ->  CTE Scan on case_evidence ce_1  (cost=0.00..600.00 rows=30000 width=852) (actual time=49.544..70.256 rows=30000 loops=1)
+                                         Buffers: shared hit=91291, temp written=344
+                                         I/O Timings: temp write=1.027
+                     ->  Append  (cost=1746.27..2967.54 rows=9851 width=164) (actual time=137.484..186.754 rows=10000 loops=1)
+                           Buffers: shared hit=121559, temp read=734 written=734
+                           I/O Timings: temp read=0.918 write=2.118
+                           ->  Nested Loop Left Join  (cost=1746.27..1760.37 rows=1 width=164) (actual time=137.484..172.783 rows=10000 loops=1)
+                                 Buffers: shared hit=121425, temp read=389 written=733
+                                 I/O Timings: temp read=0.403 write=2.101
+                                 ->  Merge Join  (cost=1745.99..1755.20 rows=1 width=802) (actual time=137.453..155.879 rows=10000 loops=1)
+                                       Merge Cond: (positioned_evidence.case_key = rr.case_key)
+                                       Buffers: shared hit=91425, temp read=389 written=733
+                                       I/O Timings: temp read=0.403 write=2.101
+                                       ->  GroupAggregate  (cost=680.42..682.98 rows=106 width=52) (actual time=121.780..127.021 rows=10000 loops=1)
+                                             Group Key: positioned_evidence.case_key
+                                             Buffers: shared hit=91291, temp written=732
+                                             I/O Timings: temp write=2.099
+                                             ->  Sort  (cost=680.42..680.80 rows=150 width=52) (actual time=121.775..122.728 rows=30000 loops=1)
+                                                   Sort Key: positioned_evidence.case_key
+                                                   Sort Method: quicksort  Memory: 2644kB
+                                                   Buffers: shared hit=91291, temp written=732
+                                                   I/O Timings: temp write=2.099
+                                                   ->  CTE Scan on positioned_evidence  (cost=0.00..675.00 rows=150 width=52) (actual time=100.018..118.077 rows=30000 loops=1)
+                                                         Filter: (owner_id = 1)
+                                                         Buffers: shared hit=91291, temp written=732
+                                                         I/O Timings: temp write=2.099
+                                       ->  Materialize  (cost=1065.57..1071.94 rows=1 width=790) (actual time=15.669..25.662 rows=10000 loops=1)
+                                             Buffers: shared hit=134, temp read=389 written=1
+                                             I/O Timings: temp read=0.403 write=0.003
+                                             ->  Subquery Scan on rr  (cost=1065.57..1071.94 rows=1 width=790) (actual time=15.667..23.510 rows=10000 loops=1)
+                                                   Filter: (rr.representative_rank = 1)
+                                                   Buffers: shared hit=134, temp read=389 written=1
+                                                   I/O Timings: temp read=0.403 write=0.003
+                                                   ->  WindowAgg  (cost=1065.57..1070.07 rows=150 width=802) (actual time=15.667..22.884 rows=10000 loops=1)
+                                                         Run Condition: (row_number() OVER (?) <= 1)
+                                                         Buffers: shared hit=134, temp read=389 written=1
+                                                         I/O Timings: temp read=0.403 write=0.003
+                                                         ->  Sort  (cost=1065.57..1065.94 rows=150 width=794) (actual time=15.660..16.810 rows=30000 loops=1)
+                                                               Sort Key: pe.case_key, (CASE WHEN (cp_1.representative_evidence_id = pe.evidence_id) THEN 0 WHEN ((pe.lifecycle_status)::text = 'ACTIVE'::text) THEN 1 ELSE 2 END), pe.evidence_id
+                                                               Sort Method: quicksort  Memory: 3815kB
+                                                               Buffers: shared hit=134, temp read=389 written=1
+                                                               I/O Timings: temp read=0.403 write=0.003
+                                                               ->  Hash Left Join  (cost=384.00..1060.14 rows=150 width=794) (actual time=2.077..10.356 rows=30000 loops=1)
+                                                                     Hash Cond: (pe.case_key = (cp_1.case_key)::text)
+                                                                     Buffers: shared hit=134, temp read=389 written=1
+                                                                     I/O Timings: temp read=0.403 write=0.003
+                                                                     ->  CTE Scan on positioned_evidence pe  (cost=0.00..675.00 rows=150 width=848) (actual time=0.006..2.685 rows=30000 loops=1)
+                                                                           Filter: (owner_id = 1)
+                                                                           Buffers: temp read=389 written=1
+                                                                           I/O Timings: temp read=0.403 write=0.003
+                                                                     ->  Hash  (cost=259.00..259.00 rows=10000 width=28) (actual time=2.048..2.049 rows=10000 loops=1)
+                                                                           Buckets: 16384  Batches: 1  Memory Usage: 714kB
+                                                                           Buffers: shared hit=134
+                                                                           ->  Seq Scan on case_profiles cp_1  (cost=0.00..259.00 rows=10000 width=28) (actual time=0.007..0.970 rows=10000 loops=1)
+                                                                                 Filter: (uploader_id = 1)
+                                                                                 Buffers: shared hit=134
+                                 ->  Index Scan using uknw9urlatp7qpg6dwr2d4itxh5 on case_profiles cp  (cost=0.29..5.14 rows=1 width=28) (actual time=0.001..0.001 rows=1 loops=10000)
+                                       Index Cond: ((uploader_id = 1) AND ((case_key)::text = positioned_evidence.case_key))
+                                       Buffers: shared hit=30000
+                           ->  Subquery Scan on "*SELECT* 2"  (cost=384.00..1157.92 rows=9850 width=164) (actual time=13.453..13.453 rows=0 loops=1)
+                                 Buffers: shared hit=134, temp read=345 written=1
+                                 I/O Timings: temp read=0.515 write=0.016
+                                 ->  Hash Right Anti Join  (cost=384.00..1059.42 rows=9850 width=608) (actual time=13.452..13.453 rows=0 loops=1)
+                                       Hash Cond: (ce.case_key = (cp_2.case_key)::text)
+                                       Buffers: shared hit=134, temp read=345 written=1
+                                       I/O Timings: temp read=0.515 write=0.016
+                                       ->  CTE Scan on case_evidence ce  (cost=0.00..675.00 rows=150 width=40) (actual time=0.022..2.885 rows=30000 loops=1)
+                                             Filter: (owner_id = 1)
+                                             Buffers: temp read=345 written=1
+                                             I/O Timings: temp read=0.515 write=0.016
+                                       ->  Hash  (cost=259.00..259.00 rows=10000 width=36) (actual time=7.053..7.053 rows=10000 loops=1)
+                                             Buckets: 16384  Batches: 1  Memory Usage: 832kB
+                                             Buffers: shared hit=134
+                                             ->  Seq Scan on case_profiles cp_2  (cost=0.00..259.00 rows=10000 width=36) (actual time=0.008..0.931 rows=10000 loops=1)
+                                                   Filter: (uploader_id = 1)
+                                                   Buffers: shared hit=134
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.587 ms
+ Execution Time: 190.995 ms
+(126 rows)
+
+=== PAGE CONTENT: owner=1, newest, offset=9990, size=10 ===
+                                                                                                                    QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Limit  (cost=33616.31..33616.32 rows=1 width=48) (actual time=245.902..245.912 rows=10 loops=1)
+   Buffers: shared hit=121559, temp read=734 written=734
+   I/O Timings: temp read=0.614 write=17.997
+   ->  Sort  (cost=33591.69..33616.31 rows=9851 width=48) (actual time=245.318..245.637 rows=10000 loops=1)
+         Sort Key: c1_candidates.created_at DESC, c1_candidates.case_key
+         Sort Method: quicksort  Memory: 1088kB
+         Buffers: shared hit=121559, temp read=734 written=734
+         I/O Timings: temp read=0.614 write=17.997
+         ->  Subquery Scan on c1_candidates  (cost=31519.98..32938.27 rows=9851 width=48) (actual time=193.484..241.362 rows=10000 loops=1)
+               Buffers: shared hit=121559, temp read=734 written=734
+               I/O Timings: temp read=0.614 write=17.997
+               ->  Subquery Scan on candidates  (cost=31519.98..32839.76 rows=9851 width=164) (actual time=193.484..240.682 rows=10000 loops=1)
+                     Buffers: shared hit=121559, temp read=734 written=734
+                     I/O Timings: temp read=0.614 write=17.997
+                     CTE case_evidence
+                       ->  Hash Left Join  (cost=12749.31..14987.31 rows=30000 width=99) (actual time=50.771..63.945 rows=30000 loops=1)
+                             Hash Cond: (e.evidence_id = lr.evidence_id)
+                             Buffers: shared hit=91291
+                             ->  Seq Scan on evidences e  (cost=0.00..1446.00 rows=30000 width=75) (actual time=0.003..4.053 rows=30000 loops=1)
+                                   Filter: ((deleted_at IS NULL) AND ((status)::text = 'UPLOADED'::text))
+                                   Buffers: shared hit=1071
+                             ->  Hash  (cost=12743.68..12743.68 rows=450 width=15) (actual time=50.756..50.758 rows=30000 loops=1)
+                                   Buckets: 32768 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 1780kB
+                                   Buffers: shared hit=90220
+                                   ->  Subquery Scan on lr  (cost=0.56..12743.68 rows=450 width=15) (actual time=0.043..46.476 rows=30000 loops=1)
+                                         Filter: (lr.request_rank = 1)
+                                         Buffers: shared hit=90220
+                                         ->  WindowAgg  (cost=0.56..11618.68 rows=90000 width=39) (actual time=0.043..44.126 rows=30000 loops=1)
+                                               Run Condition: (row_number() OVER (?) <= 1)
+                                               Buffers: shared hit=90220
+                                               ->  Incremental Sort  (cost=0.56..9818.68 rows=90000 width=31) (actual time=0.039..30.608 rows=90000 loops=1)
+                                                     Sort Key: ar.evidence_id, ar.requested_at DESC, ar.analysis_request_id DESC
+                                                     Presorted Key: ar.evidence_id
+                                                     Full-sort Groups: 2728  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+                                                     Buffers: shared hit=90220
+                                                     ->  Index Scan using idx_analysis_requests_evidence_id on analysis_requests ar  (cost=0.29..7380.37 rows=90000 width=31) (actual time=0.007..17.865 rows=90000 loops=1)
+                                                           Buffers: shared hit=90220
+                     CTE positioned_evidence
+                       ->  WindowAgg  (cost=14111.40..14786.40 rows=30000 width=860) (actual time=129.489..137.892 rows=30000 loops=1)
+                             Buffers: shared hit=91291, temp written=344
+                             I/O Timings: temp write=6.175
+                             ->  Sort  (cost=14111.40..14186.40 rows=30000 width=852) (actual time=129.480..130.425 rows=30000 loops=1)
+                                   Sort Key: ce_1.owner_id, ce_1.case_key, ce_1.evidence_id
+                                   Sort Method: quicksort  Memory: 4005kB
+                                   Buffers: shared hit=91291, temp written=344
+                                   I/O Timings: temp write=6.175
+                                   ->  CTE Scan on case_evidence ce_1  (cost=0.00..600.00 rows=30000 width=852) (actual time=50.772..82.200 rows=30000 loops=1)
+                                         Buffers: shared hit=91291, temp written=344
+                                         I/O Timings: temp write=6.175
+                     ->  Append  (cost=1746.27..2967.54 rows=9851 width=164) (actual time=193.483..239.919 rows=10000 loops=1)
+                           Buffers: shared hit=121559, temp read=734 written=734
+                           I/O Timings: temp read=0.614 write=17.997
+                           ->  Nested Loop Left Join  (cost=1746.27..1760.37 rows=1 width=164) (actual time=193.482..229.095 rows=10000 loops=1)
+                                 Buffers: shared hit=121425, temp read=389 written=733
+                                 I/O Timings: temp read=0.325 write=17.974
+                                 ->  Merge Join  (cost=1745.99..1755.20 rows=1 width=802) (actual time=193.459..212.014 rows=10000 loops=1)
+                                       Merge Cond: (positioned_evidence.case_key = rr.case_key)
+                                       Buffers: shared hit=91425, temp read=389 written=733
+                                       I/O Timings: temp read=0.325 write=17.974
+                                       ->  GroupAggregate  (cost=680.42..682.98 rows=106 width=52) (actual time=168.233..173.518 rows=10000 loops=1)
+                                             Group Key: positioned_evidence.case_key
+                                             Buffers: shared hit=91291, temp written=732
+                                             I/O Timings: temp write=17.972
+                                             ->  Sort  (cost=680.42..680.80 rows=150 width=52) (actual time=168.227..169.211 rows=30000 loops=1)
+                                                   Sort Key: positioned_evidence.case_key
+                                                   Sort Method: quicksort  Memory: 2644kB
+                                                   Buffers: shared hit=91291, temp written=732
+                                                   I/O Timings: temp write=17.972
+                                                   ->  CTE Scan on positioned_evidence  (cost=0.00..675.00 rows=150 width=52) (actual time=129.491..158.490 rows=30000 loops=1)
+                                                         Filter: (owner_id = 1)
+                                                         Buffers: shared hit=91291, temp written=732
+                                                         I/O Timings: temp write=17.972
+                                       ->  Materialize  (cost=1065.57..1071.94 rows=1 width=790) (actual time=25.223..35.259 rows=10000 loops=1)
+                                             Buffers: shared hit=134, temp read=389 written=1
+                                             I/O Timings: temp read=0.325 write=0.002
+                                             ->  Subquery Scan on rr  (cost=1065.57..1071.94 rows=1 width=790) (actual time=25.222..33.054 rows=10000 loops=1)
+                                                   Filter: (rr.representative_rank = 1)
+                                                   Buffers: shared hit=134, temp read=389 written=1
+                                                   I/O Timings: temp read=0.325 write=0.002
+                                                   ->  WindowAgg  (cost=1065.57..1070.07 rows=150 width=802) (actual time=25.221..32.434 rows=10000 loops=1)
+                                                         Run Condition: (row_number() OVER (?) <= 1)
+                                                         Buffers: shared hit=134, temp read=389 written=1
+                                                         I/O Timings: temp read=0.325 write=0.002
+                                                         ->  Sort  (cost=1065.57..1065.94 rows=150 width=794) (actual time=25.205..26.170 rows=30000 loops=1)
+                                                               Sort Key: pe.case_key, (CASE WHEN (cp_1.representative_evidence_id = pe.evidence_id) THEN 0 WHEN ((pe.lifecycle_status)::text = 'ACTIVE'::text) THEN 1 ELSE 2 END), pe.evidence_id
+                                                               Sort Method: quicksort  Memory: 3815kB
+                                                               Buffers: shared hit=134, temp read=389 written=1
+                                                               I/O Timings: temp read=0.325 write=0.002
+                                                               ->  Hash Left Join  (cost=384.00..1060.14 rows=150 width=794) (actual time=6.187..14.322 rows=30000 loops=1)
+                                                                     Hash Cond: (pe.case_key = (cp_1.case_key)::text)
+                                                                     Buffers: shared hit=134, temp read=389 written=1
+                                                                     I/O Timings: temp read=0.325 write=0.002
+                                                                     ->  CTE Scan on positioned_evidence pe  (cost=0.00..675.00 rows=150 width=848) (actual time=0.007..2.567 rows=30000 loops=1)
+                                                                           Filter: (owner_id = 1)
+                                                                           Buffers: temp read=389 written=1
+                                                                           I/O Timings: temp read=0.325 write=0.002
+                                                                     ->  Hash  (cost=259.00..259.00 rows=10000 width=28) (actual time=6.096..6.097 rows=10000 loops=1)
+                                                                           Buckets: 16384  Batches: 1  Memory Usage: 714kB
+                                                                           Buffers: shared hit=134
+                                                                           ->  Seq Scan on case_profiles cp_1  (cost=0.00..259.00 rows=10000 width=28) (actual time=0.009..0.990 rows=10000 loops=1)
+                                                                                 Filter: (uploader_id = 1)
+                                                                                 Buffers: shared hit=134
+                                 ->  Index Scan using uknw9urlatp7qpg6dwr2d4itxh5 on case_profiles cp  (cost=0.29..5.14 rows=1 width=28) (actual time=0.001..0.001 rows=1 loops=10000)
+                                       Index Cond: ((uploader_id = 1) AND ((case_key)::text = positioned_evidence.case_key))
+                                       Buffers: shared hit=30000
+                           ->  Subquery Scan on "*SELECT* 2"  (cost=384.00..1157.92 rows=9850 width=164) (actual time=10.269..10.270 rows=0 loops=1)
+                                 Buffers: shared hit=134, temp read=345 written=1
+                                 I/O Timings: temp read=0.289 write=0.023
+                                 ->  Hash Right Anti Join  (cost=384.00..1059.42 rows=9850 width=608) (actual time=10.269..10.269 rows=0 loops=1)
+                                       Hash Cond: (ce.case_key = (cp_2.case_key)::text)
+                                       Buffers: shared hit=134, temp read=345 written=1
+                                       I/O Timings: temp read=0.289 write=0.023
+                                       ->  CTE Scan on case_evidence ce  (cost=0.00..675.00 rows=150 width=40) (actual time=0.028..2.687 rows=30000 loops=1)
+                                             Filter: (owner_id = 1)
+                                             Buffers: temp read=345 written=1
+                                             I/O Timings: temp read=0.289 write=0.023
+                                       ->  Hash  (cost=259.00..259.00 rows=10000 width=36) (actual time=2.591..2.591 rows=10000 loops=1)
+                                             Buckets: 16384  Batches: 1  Memory Usage: 832kB
+                                             Buffers: shared hit=134
+                                             ->  Seq Scan on case_profiles cp_2  (cost=0.00..259.00 rows=10000 width=36) (actual time=0.007..0.915 rows=10000 loops=1)
+                                                   Filter: (uploader_id = 1)
+                                                   Buffers: shared hit=134
+ Planning:
+   Buffers: shared hit=6
+ Planning Time: 0.598 ms
+ Execution Time: 246.887 ms
+(126 rows)
+
+=== PAGE COUNT: owner=1 ===
+                                                                                                              QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Aggregate  (cost=32962.89..32962.90 rows=1 width=8) (actual time=186.144..186.152 rows=1 loops=1)
+   Buffers: shared hit=121559, temp read=734 written=734
+   I/O Timings: temp read=0.597 write=1.179
+   ->  Subquery Scan on candidates  (cost=31519.98..32839.76 rows=9851 width=164) (actual time=139.636..185.656 rows=10000 loops=1)
+         Buffers: shared hit=121559, temp read=734 written=734
+         I/O Timings: temp read=0.597 write=1.179
+         CTE case_evidence
+           ->  Hash Left Join  (cost=12749.31..14987.31 rows=30000 width=99) (actual time=50.083..62.704 rows=30000 loops=1)
+                 Hash Cond: (e.evidence_id = lr.evidence_id)
+                 Buffers: shared hit=91291
+                 ->  Seq Scan on evidences e  (cost=0.00..1446.00 rows=30000 width=75) (actual time=0.003..3.921 rows=30000 loops=1)
+                       Filter: ((deleted_at IS NULL) AND ((status)::text = 'UPLOADED'::text))
+                       Buffers: shared hit=1071
+                 ->  Hash  (cost=12743.68..12743.68 rows=450 width=15) (actual time=50.070..50.071 rows=30000 loops=1)
+                       Buckets: 32768 (originally 1024)  Batches: 1 (originally 1)  Memory Usage: 1780kB
+                       Buffers: shared hit=90220
+                       ->  Subquery Scan on lr  (cost=0.56..12743.68 rows=450 width=15) (actual time=0.048..46.749 rows=30000 loops=1)
+                             Filter: (lr.request_rank = 1)
+                             Buffers: shared hit=90220
+                             ->  WindowAgg  (cost=0.56..11618.68 rows=90000 width=39) (actual time=0.048..44.600 rows=30000 loops=1)
+                                   Run Condition: (row_number() OVER (?) <= 1)
+                                   Buffers: shared hit=90220
+                                   ->  Incremental Sort  (cost=0.56..9818.68 rows=90000 width=31) (actual time=0.045..31.070 rows=90000 loops=1)
+                                         Sort Key: ar.evidence_id, ar.requested_at DESC, ar.analysis_request_id DESC
+                                         Presorted Key: ar.evidence_id
+                                         Full-sort Groups: 2728  Sort Method: quicksort  Average Memory: 26kB  Peak Memory: 26kB
+                                         Buffers: shared hit=90220
+                                         ->  Index Scan using idx_analysis_requests_evidence_id on analysis_requests ar  (cost=0.29..7380.37 rows=90000 width=31) (actual time=0.020..18.248 rows=90000 loops=1)
+                                               Buffers: shared hit=90220
+         CTE positioned_evidence
+           ->  WindowAgg  (cost=14111.40..14786.40 rows=30000 width=860) (actual time=101.184..110.075 rows=30000 loops=1)
+                 Buffers: shared hit=91291, temp written=344
+                 I/O Timings: temp write=0.534
+                 ->  Sort  (cost=14111.40..14186.40 rows=30000 width=852) (actual time=101.176..102.205 rows=30000 loops=1)
+                       Sort Key: ce_1.owner_id, ce_1.case_key, ce_1.evidence_id
+                       Sort Method: quicksort  Memory: 4005kB
+                       Buffers: shared hit=91291, temp written=344
+                       I/O Timings: temp write=0.534
+                       ->  CTE Scan on case_evidence ce_1  (cost=0.00..600.00 rows=30000 width=852) (actual time=50.084..70.569 rows=30000 loops=1)
+                             Buffers: shared hit=91291, temp written=344
+                             I/O Timings: temp write=0.534
+         ->  Append  (cost=1746.27..2967.54 rows=9851 width=164) (actual time=139.635..184.833 rows=10000 loops=1)
+               Buffers: shared hit=121559, temp read=734 written=734
+               I/O Timings: temp read=0.597 write=1.179
+               ->  Nested Loop Left Join  (cost=1746.27..1760.37 rows=1 width=164) (actual time=139.634..176.478 rows=10000 loops=1)
+                     Buffers: shared hit=121425, temp read=389 written=733
+                     I/O Timings: temp read=0.308 write=1.158
+                     ->  Merge Join  (cost=1745.99..1755.20 rows=1 width=802) (actual time=139.589..159.257 rows=10000 loops=1)
+                           Merge Cond: (positioned_evidence.case_key = rr.case_key)
+                           Buffers: shared hit=91425, temp read=389 written=733
+                           I/O Timings: temp read=0.308 write=1.158
+                           ->  GroupAggregate  (cost=680.42..682.98 rows=106 width=52) (actual time=123.597..128.947 rows=10000 loops=1)
+                                 Group Key: positioned_evidence.case_key
+                                 Buffers: shared hit=91291, temp written=732
+                                 I/O Timings: temp write=1.150
+                                 ->  Sort  (cost=680.42..680.80 rows=150 width=52) (actual time=123.591..124.574 rows=30000 loops=1)
+                                       Sort Key: positioned_evidence.case_key
+                                       Sort Method: quicksort  Memory: 2644kB
+                                       Buffers: shared hit=91291, temp written=732
+                                       I/O Timings: temp write=1.150
+                                       ->  CTE Scan on positioned_evidence  (cost=0.00..675.00 rows=150 width=52) (actual time=101.187..119.658 rows=30000 loops=1)
+                                             Filter: (owner_id = 1)
+                                             Buffers: shared hit=91291, temp written=732
+                                             I/O Timings: temp write=1.150
+                           ->  Materialize  (cost=1065.57..1071.94 rows=1 width=790) (actual time=15.988..27.078 rows=10000 loops=1)
+                                 Buffers: shared hit=134, temp read=389 written=1
+                                 I/O Timings: temp read=0.308 write=0.007
+                                 ->  Subquery Scan on rr  (cost=1065.57..1071.94 rows=1 width=790) (actual time=15.985..24.917 rows=10000 loops=1)
+                                       Filter: (rr.representative_rank = 1)
+                                       Buffers: shared hit=134, temp read=389 written=1
+                                       I/O Timings: temp read=0.308 write=0.007
+                                       ->  WindowAgg  (cost=1065.57..1070.07 rows=150 width=802) (actual time=15.984..24.268 rows=10000 loops=1)
+                                             Run Condition: (row_number() OVER (?) <= 1)
+                                             Buffers: shared hit=134, temp read=389 written=1
+                                             I/O Timings: temp read=0.308 write=0.007
+                                             ->  Sort  (cost=1065.57..1065.94 rows=150 width=794) (actual time=15.963..16.964 rows=30000 loops=1)
+                                                   Sort Key: pe.case_key, (CASE WHEN (cp_1.representative_evidence_id = pe.evidence_id) THEN 0 WHEN ((pe.lifecycle_status)::text = 'ACTIVE'::text) THEN 1 ELSE 2 END), pe.evidence_id
+                                                   Sort Method: quicksort  Memory: 3815kB
+                                                   Buffers: shared hit=134, temp read=389 written=1
+                                                   I/O Timings: temp read=0.308 write=0.007
+                                                   ->  Hash Left Join  (cost=384.00..1060.14 rows=150 width=794) (actual time=2.135..10.507 rows=30000 loops=1)
+                                                         Hash Cond: (pe.case_key = (cp_1.case_key)::text)
+                                                         Buffers: shared hit=134, temp read=389 written=1
+                                                         I/O Timings: temp read=0.308 write=0.007
+                                                         ->  CTE Scan on positioned_evidence pe  (cost=0.00..675.00 rows=150 width=848) (actual time=0.012..2.650 rows=30000 loops=1)
+                                                               Filter: (owner_id = 1)
+                                                               Buffers: temp read=389 written=1
+                                                               I/O Timings: temp read=0.308 write=0.007
+                                                         ->  Hash  (cost=259.00..259.00 rows=10000 width=28) (actual time=2.101..2.101 rows=10000 loops=1)
+                                                               Buckets: 16384  Batches: 1  Memory Usage: 714kB
+                                                               Buffers: shared hit=134
+                                                               ->  Seq Scan on case_profiles cp_1  (cost=0.00..259.00 rows=10000 width=28) (actual time=0.014..1.004 rows=10000 loops=1)
+                                                                     Filter: (uploader_id = 1)
+                                                                     Buffers: shared hit=134
+                     ->  Index Scan using uknw9urlatp7qpg6dwr2d4itxh5 on case_profiles cp  (cost=0.29..5.14 rows=1 width=28) (actual time=0.001..0.001 rows=1 loops=10000)
+                           Index Cond: ((uploader_id = 1) AND ((case_key)::text = positioned_evidence.case_key))
+                           Buffers: shared hit=30000
+               ->  Subquery Scan on "*SELECT* 2"  (cost=384.00..1157.92 rows=9850 width=164) (actual time=7.817..7.817 rows=0 loops=1)
+                     Buffers: shared hit=134, temp read=345 written=1
+                     I/O Timings: temp read=0.289 write=0.021
+                     ->  Hash Right Anti Join  (cost=384.00..1059.42 rows=9850 width=608) (actual time=7.816..7.816 rows=0 loops=1)
+                           Hash Cond: (ce.case_key = (cp_2.case_key)::text)
+                           Buffers: shared hit=134, temp read=345 written=1
+                           I/O Timings: temp read=0.289 write=0.021
+                           ->  CTE Scan on case_evidence ce  (cost=0.00..675.00 rows=150 width=40) (actual time=0.028..2.655 rows=30000 loops=1)
+                                 Filter: (owner_id = 1)
+                                 Buffers: temp read=345 written=1
+                                 I/O Timings: temp read=0.289 write=0.021
+                           ->  Hash  (cost=259.00..259.00 rows=10000 width=36) (actual time=2.054..2.055 rows=10000 loops=1)
+                                 Buckets: 16384  Batches: 1  Memory Usage: 832kB
+                                 Buffers: shared hit=134
+                                 ->  Seq Scan on case_profiles cp_2  (cost=0.00..259.00 rows=10000 width=36) (actual time=0.008..0.945 rows=10000 loops=1)
+                                       Filter: (uploader_id = 1)
+                                       Buffers: shared hit=134
+ Planning:
+   Buffers: shared hit=9
+ Planning Time: 0.553 ms
+ Execution Time: 186.986 ms
+(118 rows)
+
+=== EVIDENCE BATCH: newest page 10 case keys ===
+                                                                                                                                                                                                                                                   QUERY PLAN
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=2125.16..2128.91 rows=1500 width=969) (actual time=6.571..6.572 rows=30 loops=1)
+   Sort Key: evidence_id
+   Sort Method: quicksort  Memory: 33kB
+   Buffers: shared hit=1071
+   ->  Seq Scan on evidences e  (cost=0.03..2046.03 rows=1500 width=969) (actual time=2.223..6.560 rows=30 loops=1)
+         Filter: ((deleted_at IS NULL) AND ((status)::text = 'UPLOADED'::text) AND (uploader_id = 1) AND (CASE WHEN ((case_number IS NOT NULL) AND (TRIM(BOTH FROM case_number) <> ''::text)) THEN (case_number)::text WHEN ((case_name IS NOT NULL) AND (TRIM(BOTH FROM case_name) <> ''::text)) THEN (case_name)::text ELSE concat('EVIDENCE-', evidence_id) END = ANY ('{CASE-010000,CASE-009999,CASE-009998,CASE-009997,CASE-009996,CASE-009995,CASE-009994,CASE-009993,CASE-009992,CASE-009991}'::text[])))
+         Rows Removed by Filter: 29970
+         Buffers: shared hit=1071
+ Planning:
+   Buffers: shared hit=48
+ Planning Time: 0.264 ms
+ Execution Time: 6.592 ms
+(12 rows)
+
+=== ANALYSIS REQUEST BATCH: newest page 30 evidence ids ===
+                                                                    QUERY PLAN
+--------------------------------------------------------------------------------------------------------------------------------------------------
+ Sort  (cost=289.88..290.10 rows=89 width=91) (actual time=0.044..0.047 rows=90 loops=1)
+   Sort Key: requested_at DESC, analysis_request_id DESC
+   Sort Method: quicksort  Memory: 34kB
+   Buffers: shared hit=15
+   ->  Bitmap Heap Scan on analysis_requests ar  (cost=5.20..286.99 rows=89 width=91) (actual time=0.015..0.030 rows=90 loops=1)
+         Recheck Cond: ((evidence_id >= 29971) AND (evidence_id <= 30000))
+         Heap Blocks: exact=13
+         Buffers: shared hit=15
+         ->  Bitmap Index Scan on idx_analysis_requests_evidence_id  (cost=0.00..5.18 rows=89 width=0) (actual time=0.011..0.011 rows=90 loops=1)
+               Index Cond: ((evidence_id >= 29971) AND (evidence_id <= 30000))
+               Buffers: shared hit=2
+ Planning:
+   Buffers: shared hit=30
+ Planning Time: 0.172 ms
+ Execution Time: 0.067 ms
+(15 rows)
+
+=== CASE PROFILE BATCH: newest page 10 case keys ===
+                                                                                              QUERY PLAN
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+ Index Scan using uknw9urlatp7qpg6dwr2d4itxh5 on case_profiles cp  (cost=0.29..62.80 rows=10 width=1124) (actual time=0.021..0.031 rows=10 loops=1)
+   Index Cond: ((uploader_id = 1) AND ((case_key)::text = ANY ('{CASE-010000,CASE-009999,CASE-009998,CASE-009997,CASE-009996,CASE-009995,CASE-009994,CASE-009993,CASE-009992,CASE-009991}'::text[])))
+   Buffers: shared hit=24
+ Planning:
+   Buffers: shared hit=21
+ Planning Time: 0.091 ms
+ Execution Time: 0.037 ms
+(7 rows)

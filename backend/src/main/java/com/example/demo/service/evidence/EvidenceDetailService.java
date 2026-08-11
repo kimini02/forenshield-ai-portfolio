@@ -141,7 +141,8 @@ public class EvidenceDetailService {
             );
         }
 
-        List<AnalysisRequest> requests = analysisRequestRepository.findByEvidenceIdInOrderByRequestedAtDesc(
+        List<AnalysisRequest> requests = analysisRequestRepository
+                .findByEvidenceIdInOrderByRequestedAtDescAnalysisRequestIdDesc(
                 access.evidences().stream().map(Evidence::getEvidenceId).toList()
         );
         var hlsByEvidenceId = evidenceHlsLookupService.findByEvidenceIds(
@@ -163,7 +164,7 @@ public class EvidenceDetailService {
             return resolveInvestigatorCaseAccess(user, normalizedCaseId);
         }
         if (UserRoleSupport.isReviewer(user.getRole())) {
-            return resolveReviewerCaseAccess(user, normalizedCaseId);
+            return resolveReviewerCaseAccess(user, normalizedCaseId, uploaderId);
         }
         if (UserRoleSupport.isOrgAdmin(user.getRole())) {
             if (user.getRole() == UserRole.ROLE_ADMIN) {
@@ -184,11 +185,18 @@ public class EvidenceDetailService {
         return new ResolvedCaseAccess(user, user, profile.orElse(null), evidences);
     }
 
-    private ResolvedCaseAccess resolveReviewerCaseAccess(User user, String normalizedCaseId) {
-        CaseProfile profile = caseProfileRepository.findByReviewerId(user.getUserId()).stream()
+    private ResolvedCaseAccess resolveReviewerCaseAccess(User user, String normalizedCaseId, Long uploaderId) {
+        List<CaseProfile> assignedProfiles = caseProfileRepository.findByReviewerId(user.getUserId()).stream()
                 .filter(item -> normalizedCaseId.equalsIgnoreCase(item.getCaseKey()))
-                .findFirst()
-                .orElseThrow(this::caseNotFound);
+                .filter(item -> uploaderId == null || Objects.equals(item.getUploaderId(), uploaderId))
+                .toList();
+        if (assignedProfiles.isEmpty()) {
+            throw caseNotFound();
+        }
+        if (uploaderId == null && assignedProfiles.size() > 1) {
+            throw ambiguousOwner();
+        }
+        CaseProfile profile = assignedProfiles.get(0);
         return loadCaseAccessForOwner(profile.getUploaderId(), normalizedCaseId, profile);
     }
 
