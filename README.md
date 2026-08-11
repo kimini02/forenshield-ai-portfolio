@@ -4,7 +4,7 @@
 
 **📅 개발 기간: 약 2개월 반 · 👥 Team Project**
 
-📘 [Notion Portfolio](TODO) · ✍️ [Tech Blog](TODO) · 🎬 [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
+📘 [Notion Portfolio](TODO) · ✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting) · 🎬 [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
 
 ![ForenShield AI 대표 이미지](./docs/images/readme/forenshield-hero.png)
 
@@ -147,6 +147,19 @@ pnpm dev
 
 ---
 
+## 🤖 AI-Assisted Development
+
+개발 과정에서 AI를 요구사항 정리, 설계 검토, 테스트 케이스 도출과 문서화에 활용합니다. AI 결과는 그대로 반영하지 않고 코드 diff, 테스트 결과, API 계약과 도메인 정책을 직접 검증합니다.
+
+| Document | Description |
+|---|---|
+| [Agent Guide](./AGENTS.md) | 저장소 구조, 핵심 정책과 작업별 원본 문서 안내 |
+| [Development Workflow](./docs/agent/development-workflow.md) | 명세 작성부터 구현·검토까지의 협업 절차 |
+| [Verification Guide](./docs/agent/verification.md) | Frontend, Backend, AI 구성 요소별 검증 기준 |
+| [Feature Spec Template](./docs/agent/feature-spec-template.md) | 복잡한 기능 변경을 위한 간단한 명세 템플릿 |
+
+---
+
 ## 서비스 구현 화면
 
 ### 01. 사건 및 영상 증거 등록 · 무결성 검증
@@ -189,53 +202,14 @@ QR로 보고서 발행 정보를 조회하고 보유한 PDF의 SHA-256을 비교
 
 ## Problem Solving
 
-### 01. 분석 결과를 보호하는 상태 정책
+### 01. [JPA 대용량 목록 조회 최적화 — Over-fetching과 Object Materialization 병목 개선](https://mini-0923.tistory.com/9)
 
-**Problem**
-
-완료·실패한 분석 요청까지 취소 처리될 수 있어  
-이미 생성된 분석 결과의 상태가 변경될 가능성이 있었습니다.
-
-**Solution**
-
-취소 가능한 상태를 `QUEUED`, `ANALYZING`으로 제한하는 whitelist 방식으로 변경하고,  
-MVC 테스트를 통해 terminal 상태의 분석 결과가 유지되는 것을 검증했습니다.
-
-→ 자세한 과정: Tech Blog / Notion `(TODO)`
-
-### 02. 역할을 넘어 자원 범위까지 검증
-
-**Problem**
-
-검토자 배정 과정에서 역할과 기관만 확인하면  
-다른 부서의 검토자가 사건에 배정될 수 있었습니다.
-
-**Solution**
-
-동일 기관·동일 부서 조건을 공통 권한 로직으로 적용하고,  
-다른 부서 검토자 배정을 차단하는 통합 테스트를 추가했습니다.
-
-→ 자세한 과정: Tech Blog / Notion `(TODO)`
-
-### 03. 보고서 조회와 파일 무결성 검증의 의미 분리
-
-**Problem**
-
-QR 조회 결과가 사용자가 보유한 PDF 파일의 무결성까지  
-보장하는 것처럼 해석될 수 있었습니다.
-
-**Solution**
-
-QR은 ‘시스템에 등록된 보고서 발행 정보 조회’로 정의하고,  
-사용자가 보유한 PDF는 별도의 SHA-256 비교를 통해  
-MATCH / MISMATCH를 확인하도록 흐름을 분리했습니다.
-
-→ 자세한 과정: Tech Blog / Notion `(TODO)`
+### 02. [반복 COUNT Query 통합과 Single-flight를 통한 통계 API 최적화](https://mini-0923.tistory.com/14)
 
 ---
 
 ## Links
 
 - [Notion Portfolio](TODO)
-- [Tech Blog](TODO)
+- [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting)
 - [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
