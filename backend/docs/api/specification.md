@@ -314,6 +314,10 @@ FE `lib/permissions.ts` · 검토 배정(`/admin/reviews`) · 사건 상세 검�
 | `PATCH` | `/api/v1/cases/reviewer?caseKey=` | ORG_ADMIN | `{ "reviewerId": string }` | 검토자 배정 → `REVIEW_ASSIGNED` |
 | `POST` | `/api/v1/cases/review-decision?caseKey=` | REVIEWER/ORG_ADMIN | `{ "decision": "APPROVED"\|"REVISION", "memo"?: string }` | 승인 또는 재검토 요청 |
 
+`APPROVED`의 Response 200은 `CaseProfile.REPORT_APPROVED`와 발급 대상별 `ReportIssueTask.PENDING`이 같은 DB transaction에서 commit됐음을 뜻한다. PDF 발행 완료(`Report.ISSUED`)를 뜻하지 않으며, 발급 가능한 최신 완료 분석 결과가 없으면 task를 만들지 않는다.
+
+DB polling worker가 task를 처리해 Report를 `ISSUED`로 만든 뒤 Blockchain 결과를 기록하면 `reportIssueStatus=COMPLETED`가 된다. Blockchain의 명시적 `FAILED`도 Report 발행 자체를 rollback하지 않으며 task workflow는 `COMPLETED`로 종료한다. 외부 결과가 불명확한 PENDING anchor는 자동 재전송하지 않고 수동 reconciliation 사유를 기록한다.
+
 **`GET /api/v1/cases?caseKey=` 확장 (`CaseDetailResponse`)**
 
 | 필드 | 설명 |
@@ -322,6 +326,7 @@ FE `lib/permissions.ts` · 검토 배정(`/admin/reviews`) · 사건 상세 검�
 | `assigneeId` | 담당자 userId |
 | `reviewerId` | 검토자 userId |
 | `reviewStatus` | 검토 상태 enum name |
+| `reportIssueStatus` | task 기반 파생 상태: `NOT_REQUIRED` · `PENDING` · `PROCESSING` · `COMPLETED` · `FAILED` · `PARTIAL_FAILED` |
 
 검토자·기관관리자는 배정/소속 사건에 대해 `GET /cases` 접근 가능.
 

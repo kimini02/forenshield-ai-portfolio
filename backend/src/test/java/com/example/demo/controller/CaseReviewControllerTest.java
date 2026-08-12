@@ -4,11 +4,13 @@ import com.example.demo.domain.AnalysisRequest;
 import com.example.demo.domain.AnalysisResult;
 import com.example.demo.domain.CaseProfile;
 import com.example.demo.domain.Evidence;
+import com.example.demo.domain.Report;
 import com.example.demo.domain.User;
 import com.example.demo.domain.enums.AnalysisStatus;
+import com.example.demo.domain.enums.CaseReviewStatus;
 import com.example.demo.domain.enums.FileType;
 import com.example.demo.domain.enums.OrgType;
-import com.example.demo.domain.enums.ReportPublicationStatus;
+import com.example.demo.domain.enums.ReportIssueTaskStatus;
 import com.example.demo.domain.enums.RiskLevel;
 import com.example.demo.domain.enums.UserRole;
 import com.example.demo.domain.enums.UserStatus;
@@ -20,6 +22,9 @@ import com.example.demo.repository.CustodyLogRepository;
 import com.example.demo.repository.EvidenceRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.ReportRepository;
+import com.example.demo.repository.ReportIssueTaskRepository;
+import com.example.demo.service.blockchain.BlockchainAnchorService;
+import com.example.demo.service.report.ReportPdfService;
 import com.example.demo.support.JwtTestSupport;
 import com.lowagie.text.pdf.PdfReader;
 import com.lowagie.text.pdf.parser.PdfTextExtractor;
@@ -30,6 +35,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -41,6 +48,11 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.reset;
+import static org.mockito.Mockito.verify;
 
 @SpringBootTest(properties = {
         "spring.autoconfigure.exclude=org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration"
@@ -69,6 +81,15 @@ class CaseReviewControllerTest {
     @Autowired
     private ReportRepository reportRepository;
 
+    @SpyBean
+    private ReportIssueTaskRepository reportIssueTaskRepository;
+
+    @SpyBean
+    private ReportPdfService reportPdfService;
+
+    @SpyBean
+    private BlockchainAnchorService blockchainAnchorService;
+
     @Autowired
     private BlockchainAnchorRepository blockchainAnchorRepository;
 
@@ -89,9 +110,11 @@ class CaseReviewControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        reset(reportIssueTaskRepository, reportPdfService, blockchainAnchorService);
         custodyLogRepository.deleteAll();
         blockchainAnchorRepository.deleteAll();
         reportRepository.deleteAll();
+        reportIssueTaskRepository.deleteAll();
         caseProfileRepository.deleteAll();
         analysisResultRepository.deleteAll();
         analysisRequestRepository.deleteAll();
@@ -155,9 +178,11 @@ class CaseReviewControllerTest {
 
     @AfterEach
     void tearDown() {
+        reset(reportIssueTaskRepository, reportPdfService, blockchainAnchorService);
         custodyLogRepository.deleteAll();
         blockchainAnchorRepository.deleteAll();
         reportRepository.deleteAll();
+        reportIssueTaskRepository.deleteAll();
         caseProfileRepository.deleteAll();
         analysisResultRepository.deleteAll();
         analysisRequestRepository.deleteAll();
@@ -207,13 +232,22 @@ class CaseReviewControllerTest {
                                 """))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.reviewStatus").value("REPORT_APPROVED"))
+                .andExpect(jsonPath("$.reportIssueStatus").value("PENDING"))
                 .andExpect(jsonPath("$.reviewerComment").value("최종 보고서 발행 승인"));
 
-        var issuedReport = reportRepository
-                .findTopByEvidenceIdOrderByCreatedAtDesc(completedEvidence.getEvidenceId())
-                .orElseThrow();
-        assertThat(issuedReport.getPublicationStatus()).isEqualTo(ReportPublicationStatus.ISSUED);
-        assertThat(issuedReport.getVerificationToken()).isNotBlank();
+        assertThat(reportRepository.count()).isZero();
+        assertThat(blockchainAnchorRepository.count()).isZero();
+        verify(reportPdfService, never()).issueCaseReports(org.mockito.ArgumentMatchers.any(), anyList());
+        verify(blockchainAnchorService, never()).anchorReportHash(
+                org.mockito.ArgumentMatchers.any(), org.mockito.ArgumentMatchers.any());
+        assertThat(reportIssueTaskRepository.findAll())
+                .singleElement()
+                .satisfies(task -> {
+                    assertThat(task.getEvidenceId()).isEqualTo(completedEvidence.getEvidenceId());
+                    assertThat(task.getAnalysisResultId()).isEqualTo(result.getAnalysisResultId());
+                    assertThat(task.getStatus()).isEqualTo(ReportIssueTaskStatus.PENDING);
+                    assertThat(task.getAttemptCount()).isZero();
+                });
     }
 
     @Test
@@ -234,7 +268,140 @@ class CaseReviewControllerTest {
                                 {"decision":"REVISION"}
                                 """))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.reviewStatus").value("REVIEW_SUPPLEMENT_REQUESTED"));
+                .andExpect(jsonPath("$.reviewStatus").value("REVIEW_SUPPLEMENT_REQUESTED"))
+                .andExpect(jsonPath("$.reportIssueStatus").value("NOT_REQUIRED"));
+
+        assertThat(reportIssueTaskRepository.count()).isZero();
+    }
+
+    @Test
+    void reviewWorkflow_threeEligibleEvidencesCreateThreePendingTasks() throws Exception {
+        saveAnalysisResultForLatest(completedEvidence, "first");
+        Evidence second = saveCompletedEvidence("review-case", "second.mp4");
+        Evidence third = saveCompletedEvidence("review-case", "third.mp4");
+        saveAnalysisResultForLatest(second, "second");
+        saveAnalysisResultForLatest(third, "third");
+        CaseProfile profile = assignedProfile();
+
+        mockMvc.perform(post("/api/v1/cases/review-decision?caseKey=review-case")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"APPROVED"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reportIssueStatus").value("PENDING"));
+
+        assertThat(caseProfileRepository.findById(profile.getCaseProfileId()).orElseThrow().getReviewStatus())
+                .isEqualTo(CaseReviewStatus.REPORT_APPROVED);
+        assertThat(reportIssueTaskRepository.findAll()).hasSize(3)
+                .allSatisfy(task -> assertThat(task.getStatus()).isEqualTo(ReportIssueTaskStatus.PENDING));
+        assertThat(reportRepository.count()).isZero();
+        assertThat(blockchainAnchorRepository.count()).isZero();
+    }
+
+    @Test
+    void reviewWorkflow_taskInsertFailureRollsBackApproval() throws Exception {
+        saveAnalysisResultForLatest(completedEvidence, "rollback");
+        CaseProfile profile = assignedProfile();
+        doThrow(new DataIntegrityViolationException("forced task insert failure"))
+                .when(reportIssueTaskRepository).saveAllAndFlush(anyList());
+
+        int responseStatus;
+        try {
+            responseStatus = mockMvc.perform(post("/api/v1/cases/review-decision?caseKey=review-case")
+                            .header(HttpHeaders.AUTHORIZATION, "Bearer " + reviewerToken)
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("""
+                                    {"decision":"APPROVED"}
+                                    """))
+                    .andReturn()
+                    .getResponse()
+                    .getStatus();
+        } catch (Exception expected) {
+            responseStatus = 500;
+        }
+
+        reset(reportIssueTaskRepository);
+        assertThat(responseStatus).isGreaterThanOrEqualTo(500);
+        assertThat(caseProfileRepository.findById(profile.getCaseProfileId()).orElseThrow().getReviewStatus())
+                .isEqualTo(CaseReviewStatus.REVIEW_ASSIGNED);
+        assertThat(reportIssueTaskRepository.count()).isZero();
+    }
+
+    @Test
+    void reviewWorkflow_latestRequestNotCompletedCreatesNoTask() throws Exception {
+        AnalysisRequest completed = analysisRequestRepository
+                .findTopByEvidenceIdOrderByRequestedAtDesc(completedEvidence.getEvidenceId())
+                .orElseThrow();
+        completed.setRequestedAt(LocalDateTime.now().minusMinutes(1));
+        analysisRequestRepository.save(completed);
+        saveAnalysisResultForLatest(completedEvidence, "older completed result");
+
+        AnalysisRequest latest = new AnalysisRequest();
+        latest.setEvidenceId(completedEvidence.getEvidenceId());
+        latest.setRequestedBy(investigator.getUserId());
+        latest.setStatus(AnalysisStatus.ANALYZING);
+        latest.setProgressPercent(50);
+        latest.setRequestedAt(LocalDateTime.now());
+        analysisRequestRepository.save(latest);
+        assignedProfile();
+
+        mockMvc.perform(post("/api/v1/cases/review-decision?caseKey=review-case")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"APPROVED"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reportIssueStatus").value("NOT_REQUIRED"));
+
+        assertThat(reportIssueTaskRepository.count()).isZero();
+    }
+
+    @Test
+    void reviewWorkflow_completedRequestWithoutResultCreatesNoTask() throws Exception {
+        assignedProfile();
+
+        mockMvc.perform(post("/api/v1/cases/review-decision?caseKey=review-case")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"APPROVED"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reportIssueStatus").value("NOT_REQUIRED"));
+
+        assertThat(reportIssueTaskRepository.count()).isZero();
+    }
+
+    @Test
+    void reviewWorkflow_alreadyIssuedReportCreatesNoTask() throws Exception {
+        AnalysisResult result = saveAnalysisResultForLatest(completedEvidence, "already issued");
+        Report report = new Report();
+        report.setAnalysisResultId(result.getAnalysisResultId());
+        report.setEvidenceId(completedEvidence.getEvidenceId());
+        report.setCreatedBy(investigator.getUserId());
+        report.setReportFileName("already-issued.pdf");
+        report.setStoragePath("isolated-test/already-issued.pdf");
+        report.setReportHash("a".repeat(64));
+        report.setFileSize(100L);
+        report.setCreatedAt(LocalDateTime.now());
+        report.markIssued(reviewer.getUserId(), LocalDateTime.now());
+        reportRepository.save(report);
+        assignedProfile();
+
+        mockMvc.perform(post("/api/v1/cases/review-decision?caseKey=review-case")
+                        .header(HttpHeaders.AUTHORIZATION, "Bearer " + reviewerToken)
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                                {"decision":"APPROVED"}
+                                """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.reportIssueStatus").value("NOT_REQUIRED"));
+
+        assertThat(reportIssueTaskRepository.count()).isZero();
+        assertThat(reportRepository.count()).isOne();
     }
 
     @Test
@@ -390,6 +557,30 @@ class CaseReviewControllerTest {
         request.setRequestedAt(LocalDateTime.now());
         analysisRequestRepository.save(request);
         return evidence;
+    }
+
+    private AnalysisResult saveAnalysisResultForLatest(Evidence evidence, String summary) {
+        AnalysisRequest request = analysisRequestRepository
+                .findTopByEvidenceIdOrderByRequestedAtDesc(evidence.getEvidenceId())
+                .orElseThrow();
+        AnalysisResult result = new AnalysisResult();
+        result.setAnalysisRequestId(request.getAnalysisRequestId());
+        result.setRiskScore(64.0);
+        result.setConfidenceScore(0.88);
+        result.setRiskLevel(RiskLevel.MEDIUM);
+        result.setSummary(summary);
+        result.setAnalyzedAt(LocalDateTime.now());
+        return analysisResultRepository.save(result);
+    }
+
+    private CaseProfile assignedProfile() {
+        CaseProfile profile = new CaseProfile(
+                investigator.getUserId(),
+                "review-case",
+                completedEvidence.getEvidenceId()
+        );
+        profile.assignReviewer(reviewer.getUserId());
+        return caseProfileRepository.save(profile);
     }
 
     private Evidence saveEvidence(String caseName, String fileName) {

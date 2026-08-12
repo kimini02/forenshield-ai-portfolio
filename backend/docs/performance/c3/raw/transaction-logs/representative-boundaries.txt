@@ -1,0 +1,16 @@
+# delay=0ms, run=1
+2026-08-11T14:58:02.077+09:00 JpaTransactionManager: Creating new transaction with name [com.example.demo.service.evidence.CaseReviewService.recordDecision]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-08-11T14:58:02.223+09:00 JpaTransactionManager: Initiating transaction commit
+2026-08-11T14:58:02.223+09:00 JpaTransactionManager: Committing JPA transaction
+
+# delay=1000ms, run=1
+2026-08-11T14:58:03.499+09:00 JpaTransactionManager: Creating new transaction with name [com.example.demo.service.evidence.CaseReviewService.recordDecision]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-08-11T14:58:04.668+09:00 JpaTransactionManager: Initiating transaction commit
+2026-08-11T14:58:04.668+09:00 JpaTransactionManager: Committing JPA transaction
+
+# delay=5000ms, run=1
+2026-08-11T14:58:07.867+09:00 JpaTransactionManager: Creating new transaction with name [com.example.demo.service.evidence.CaseReviewService.recordDecision]: PROPAGATION_REQUIRED,ISOLATION_DEFAULT
+2026-08-11T14:58:13.126+09:00 JpaTransactionManager: Initiating transaction commit
+2026-08-11T14:58:13.126+09:00 JpaTransactionManager: Committing JPA transaction
+
+The process id, thread formatting, EntityManager identity, and machine hostname were omitted. Full per-run UTC boundaries are in results/transaction-delay.tsv.

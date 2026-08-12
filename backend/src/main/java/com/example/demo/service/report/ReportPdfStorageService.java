@@ -123,6 +123,38 @@ public class ReportPdfStorageService {
         return saved;
     }
 
+    /**
+     * Worker-only rendering path. This method performs CPU/file work only and intentionally does not
+     * access a repository. A task-scoped deterministic file name makes an internal retry overwrite the
+     * same artifact instead of creating an unbounded series of files.
+     */
+    public IssuedReportArtifact renderAndStoreIssuedAnalysisReport(
+            Long taskId,
+            Long evidenceId,
+            List<String> lines,
+            String title
+    ) {
+        ReportVerificationPayload verificationPayload = createVerificationPayload();
+        byte[] pdfBytes = buildPdfWithQr(
+                title,
+                lines,
+                verificationPayload.reportNo(),
+                verificationPayload.verifyUrl(),
+                verificationPayload.verificationCode()
+        );
+        String fileName = "analysis-report-" + evidenceId + "-task-" + taskId + ".pdf";
+        Path reportPath = storePdf("evidence", evidenceId, fileName, pdfBytes);
+        return new IssuedReportArtifact(
+                fileName,
+                reportPath.toString(),
+                hashService.generateSha256(pdfBytes),
+                (long) pdfBytes.length,
+                verificationPayload.reportNo(),
+                verificationPayload.verificationToken(),
+                verificationPayload.verificationCode()
+        );
+    }
+
     public byte[] readStoredPdf(String storagePath) {
         try {
             return Files.readAllBytes(Paths.get(storagePath));
@@ -289,6 +321,17 @@ public class ReportPdfStorageService {
             String verificationToken,
             String verificationCode,
             String verifyUrl
+    ) {
+    }
+
+    public record IssuedReportArtifact(
+            String fileName,
+            String storagePath,
+            String reportHash,
+            long fileSize,
+            String reportNo,
+            String verificationToken,
+            String verificationCode
     ) {
     }
 }

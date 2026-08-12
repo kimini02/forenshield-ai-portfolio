@@ -1,0 +1,3 @@
+scenario	case_profile	report	task_before	task_after	anchor_before	anchor_after	error_code	manual_reconciliation	stub_calls_before	stub_calls_after	http_resubmitted
+result_persistence_failure	REPORT_APPROVED	ISSUED	PROCESSING	COMPLETED	PENDING	FAILED	ANCHOR_OUTCOME_UNKNOWN	true	1	1	false
+worker_stop_then_stale_recovery	REPORT_APPROVED	ISSUED	PROCESSING	COMPLETED	PENDING	FAILED	ANCHOR_OUTCOME_UNKNOWN	true	1	1	false

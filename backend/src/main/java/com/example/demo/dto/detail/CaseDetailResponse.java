@@ -18,6 +18,7 @@ public class CaseDetailResponse {
     private String assigneeId;
     private String reviewerId;
     private String reviewStatus;
+    private String reportIssueStatus;
     private List<CaseEvidenceSummaryDto> evidences;
     private String organizationId;
     private String reviewRequestedAt;

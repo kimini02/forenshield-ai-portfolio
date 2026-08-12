@@ -40,6 +40,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.annotation.Propagation;
 
 @Slf4j
 @Service
@@ -142,32 +143,84 @@ public class BlockchainAnchorService {
             return existingAnchored.get();
         }
 
-        String originalStoragePath = evidenceRepository.findById(report.getEvidenceId())
-                .map(Evidence::getOriginalStoragePath)
-                .orElse(null);
-        String offchainLogHash = offchainLogHashService.hashReportBundle(report);
-        OffchainRef offchainRef = OffchainRef.ofReport(report.getStoragePath(), originalStoragePath);
-        AnalysisAnchorMetadata analysisAnchorMetadata = buildAnalysisAnchorMetadata(report);
+        return executeAnchor(buildReportAnchorRequest(report), userId);
+    }
 
-        // PDF signing not introduced yet — omit signature / certVerified.
-        BlockchainAnchorRequest request = new BlockchainAnchorRequest(
-                report.getReportHash(),
-                BlockchainAnchorType.REPORT_HASH,
-                properties.getNetwork(),
-                properties.getClientId(),
-                report.getEvidenceId(),
-                report.getReportId(),
+    /** Creates the durable PENDING anchor row in a short transaction, before external HTTP. */
+    @Transactional
+    public PreparedReportAnchor prepareReportAnchor(Report report, Long userId) {
+        if (!properties.isEnabled() || report == null || report.getReportHash() == null) {
+            return PreparedReportAnchor.disabledAnchor();
+        }
+
+        BlockchainAnchor existing = anchorRepository
+                .findTopByReportIdAndAnchorTypeOrderByCreatedAtDesc(
+                        report.getReportId(), BlockchainAnchorType.REPORT_HASH)
+                .orElse(null);
+        if (existing != null) {
+            return new PreparedReportAnchor(existing.getAnchorId(), null, false, existing.getStatus(), false);
+        }
+
+        BlockchainAnchorRequest request = buildReportAnchorRequest(report);
+        BlockchainAnchor anchor = newPendingAnchor(
+                request.anchorType(),
+                request.subjectHash(),
+                request.evidenceId(),
+                request.reportId(),
+                userId,
                 null,
                 null,
-                null,
-                null,
-                null,
-                offchainLogHash,
-                offchainRef,
-                analysisAnchorMetadata.analysisModel(),
-                analysisAnchorMetadata.analysisModules()
+                request.signature(),
+                request.signerCertHash(),
+                request.certVerified(),
+                request.offchainLogHash(),
+                request.offchainRef(),
+                request.analysisModel(),
+                request.analysisModules()
         );
-        return executeAnchor(request, userId);
+        anchor = anchorRepository.saveAndFlush(anchor);
+        return new PreparedReportAnchor(anchor.getAnchorId(), request, true, BlockchainAnchorStatus.PENDING, false);
+    }
+
+    /** Executes only the gateway call. Spring suspends any accidental caller transaction. */
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public BlockchainAnchorResult submitPreparedReportAnchor(PreparedReportAnchor prepared) {
+        if (prepared == null || !prepared.shouldSubmit() || prepared.request() == null) {
+            throw new IllegalArgumentException("Prepared report anchor is not submit-ready");
+        }
+        return anchorClient.anchor(prepared.request());
+    }
+
+    @Transactional
+    public BlockchainAnchor recordPreparedReportAnchorResult(Long anchorId, BlockchainAnchorResult result) {
+        BlockchainAnchor anchor = anchorRepository.findById(anchorId)
+                .orElseThrow(() -> new IllegalArgumentException("Blockchain anchor not found: " + anchorId));
+        if (result.success()) {
+            anchor.setStatus(BlockchainAnchorStatus.ANCHORED);
+            anchor.setTransactionHash(result.transactionHash());
+            anchor.setBlockNumber(result.blockNumber());
+            anchor.setAnchoredAt(LocalDateTime.now());
+            anchor.setErrorCode(null);
+            anchor.setErrorMessage(null);
+            notifyIfNeeded(anchor, anchor.getCreatedBy());
+        } else {
+            anchor.setStatus(BlockchainAnchorStatus.FAILED);
+            anchor.setErrorCode("FABRIC_SUBMIT_FAILED");
+            anchor.setErrorMessage(result.errorMessage());
+        }
+        return anchorRepository.save(anchor);
+    }
+
+    @Transactional
+    public BlockchainAnchor markReportAnchorOutcomeUnknown(Long anchorId, String detail) {
+        BlockchainAnchor anchor = anchorRepository.findById(anchorId)
+                .orElseThrow(() -> new IllegalArgumentException("Blockchain anchor not found: " + anchorId));
+        if (anchor.getStatus() == BlockchainAnchorStatus.PENDING) {
+            anchor.setStatus(BlockchainAnchorStatus.FAILED);
+            anchor.setErrorCode("ANCHOR_OUTCOME_UNKNOWN");
+            anchor.setErrorMessage("Manual reconciliation required: " + detail);
+        }
+        return anchorRepository.save(anchor);
     }
 
     @Transactional
@@ -408,6 +461,33 @@ public class BlockchainAnchorService {
         return anchorRepository.save(anchor);
     }
 
+    private BlockchainAnchorRequest buildReportAnchorRequest(Report report) {
+        String originalStoragePath = evidenceRepository.findById(report.getEvidenceId())
+                .map(Evidence::getOriginalStoragePath)
+                .orElse(null);
+        String offchainLogHash = offchainLogHashService.hashReportBundle(report);
+        OffchainRef offchainRef = OffchainRef.ofReport(report.getStoragePath(), originalStoragePath);
+        AnalysisAnchorMetadata analysisAnchorMetadata = buildAnalysisAnchorMetadata(report);
+
+        return new BlockchainAnchorRequest(
+                report.getReportHash(),
+                BlockchainAnchorType.REPORT_HASH,
+                properties.getNetwork(),
+                properties.getClientId(),
+                report.getEvidenceId(),
+                report.getReportId(),
+                null,
+                null,
+                null,
+                null,
+                null,
+                offchainLogHash,
+                offchainRef,
+                analysisAnchorMetadata.analysisModel(),
+                analysisAnchorMetadata.analysisModules()
+        );
+    }
+
     private BlockchainAnchor newPendingAnchor(
             BlockchainAnchorType anchorType,
             String subjectHash,
@@ -534,6 +614,18 @@ public class BlockchainAnchorService {
     ) {
         private static AnalysisAnchorMetadata empty() {
             return new AnalysisAnchorMetadata(null, List.of());
+        }
+    }
+
+    public record PreparedReportAnchor(
+            Long anchorId,
+            BlockchainAnchorRequest request,
+            boolean shouldSubmit,
+            BlockchainAnchorStatus status,
+            boolean disabled
+    ) {
+        private static PreparedReportAnchor disabledAnchor() {
+            return new PreparedReportAnchor(null, null, false, null, true);
         }
     }
 
