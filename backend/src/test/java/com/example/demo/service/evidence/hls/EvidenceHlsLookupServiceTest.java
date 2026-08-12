@@ -151,6 +151,9 @@ class EvidenceHlsLookupServiceTest {
     void findEvidenceIdsNeedingHlsPackaging_prioritizesPendingOverRetryableFailed() {
         LocalDateTime now = LocalDateTime.now();
         User user = userRepository.findAll().get(0);
+        EvidenceHls existingPending = evidenceHlsRepository.findById(evidenceId1).orElseThrow();
+        existingPending.markReady("hls/" + evidenceId1 + "/", new byte[] {1}, now);
+        evidenceHlsRepository.save(existingPending);
 
         Evidence pendingEvidence = evidenceRepository.save(
                 EvidenceTestFixtures.videoEvidence(user.getUserId(), "pending.mp4", 'p')
