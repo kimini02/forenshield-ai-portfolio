@@ -4,6 +4,7 @@ import com.example.demo.domain.User;
 import com.example.demo.exception.FileSizeExceededException;
 import com.example.demo.exception.UnsupportedFileTypeException;
 import com.example.demo.security.AuthUserResolver;
+import com.example.demo.security.ClientIpResolver;
 import com.example.demo.security.JwtAuthenticationFilter;
 import com.example.demo.security.SignupRateLimitService;
 import com.example.demo.service.analysis.AnalysisCancelService;
@@ -99,6 +100,9 @@ class FileValidationIntegrationTest {
 
     @MockBean
     private SignupRateLimitService signupRateLimitService;
+
+    @MockBean
+    private ClientIpResolver clientIpResolver;
 
     @MockBean
     private JwtAuthenticationFilter jwtAuthenticationFilter;

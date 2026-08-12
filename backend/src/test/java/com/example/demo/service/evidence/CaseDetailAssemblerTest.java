@@ -7,6 +7,8 @@ import com.example.demo.domain.enums.AnalysisStatus;
 import com.example.demo.domain.enums.FileType;
 import com.example.demo.domain.enums.HlsStatus;
 import com.example.demo.service.evidence.hls.EvidenceHlsLookupService;
+import com.example.demo.domain.enums.ReportIssueStatus;
+import com.example.demo.service.report.ReportIssueTaskService;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -31,14 +33,19 @@ class CaseDetailAssemblerTest {
     @Mock
     private EvidenceHlsLookupService evidenceHlsLookupService;
 
+    @Mock
+    private ReportIssueTaskService reportIssueTaskService;
+
     private CaseDetailAssembler assembler;
 
     @BeforeEach
     void setUp() {
         assembler = new CaseDetailAssembler(
                 caseEvidencePresentationService,
-                evidenceHlsLookupService
+                evidenceHlsLookupService,
+                reportIssueTaskService
         );
+        when(reportIssueTaskService.resolveCaseStatus(null)).thenReturn(ReportIssueStatus.NOT_REQUIRED);
     }
 
     @Test

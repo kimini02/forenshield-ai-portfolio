@@ -19,6 +19,9 @@ file:
   upload-dir: build/test-uploads/original
 
 report:
+  issue:
+    worker:
+      enabled: false
   public-verify-base-url: http://localhost:3000/verify
   public-view-base-url: http://localhost:3000/public-report
   public-access-ttl-days: 7

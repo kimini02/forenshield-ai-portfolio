@@ -185,6 +185,14 @@ import { buildCaseDetailPath, decodeRouteParam } from "@/lib/route-params"
 import { normalizeAnalysisStatus, normalizeEvidenceDetailForUi, normalizeScore } from "@/lib/api/normalize-analysis"
 import { addAppNotification } from "@/lib/notifications"
 import { readinessTargetFromCaseEvidence } from "@/lib/readiness"
+import {
+  canDownloadIssuedReport,
+  getReportIssueUi,
+  isReportIssuePolling,
+  normalizeReportIssueStatus,
+  startReportIssuePolling,
+  type ReportIssueStatus,
+} from "@/lib/report-issue-status"
 import { cn } from "@/lib/utils"
 import { formatDateTime, formatDateTimeWithSeconds, formatDuration } from "@/lib/formatters"
 
@@ -353,6 +361,8 @@ export default function CaseDetailPage() {
   const [session, setSession] = useState<AuthSession | null>(() => getSession())
   const [analysisProgressOverrides, setAnalysisProgressOverrides] = useState<AnalysisProgressOverrides>({})
   const [analysisPollingMessage, setAnalysisPollingMessage] = useState<WorkflowMessage | null>(null)
+  const [reportPollingTimedOut, setReportPollingTimedOut] = useState(false)
+  const [reportPollingRestartKey, setReportPollingRestartKey] = useState(0)
   const [reviewPopoverOpen, setReviewPopoverOpen] = useState(false)
   const [reviewRequestDialogOpen, setReviewRequestDialogOpen] = useState(false)
   const isReviewer = isReviewerSession(session)
@@ -361,6 +371,7 @@ export default function CaseDetailPage() {
     caseData != null &&
     currentUser?.role === "INVESTIGATOR" &&
     isCaseOwner(currentUser, caseData)
+  const reportIssuePollingActive = isReportIssuePolling(caseData?.reportIssueStatus)
   const refreshCase = useCallback(() => {
     setCaseRefreshKey((key) => key + 1)
   }, [])
@@ -512,6 +523,29 @@ export default function CaseDetailPage() {
       cancelled = true
     }
   }, [caseId, caseRefreshKey])
+
+  useEffect(() => {
+    if (!caseId || !reportIssuePollingActive) {
+      return
+    }
+
+    return startReportIssuePolling({
+      fetchSnapshot: () => fetchCaseDetail(caseId),
+      getStatus: (snapshot) => snapshot.reportIssueStatus,
+      onSnapshot: (snapshot) => {
+        const sorted = sortEvidences(snapshot.evidences ?? [])
+        setCaseData({ ...snapshot, evidences: sorted })
+
+        if (!isReportIssuePolling(snapshot.reportIssueStatus)) {
+          const selectedId = selectedEvidenceIdRef.current
+          if (selectedId) void refreshEvidenceDetail(selectedId, { silent: true })
+        }
+      },
+      onTimeout: () => setReportPollingTimedOut(true),
+      intervalMs: 2_000,
+      maxDurationMs: 60_000,
+    })
+  }, [caseId, refreshEvidenceDetail, reportIssuePollingActive, reportPollingRestartKey])
 
   useEffect(() => {
     if (!caseData) return
@@ -842,6 +876,18 @@ export default function CaseDetailPage() {
               </>
             ) : null}
 
+            {caseData.reviewStatus === "REPORT_APPROVED" ? (
+              <ReportIssueStatusBanner
+                status={caseData.reportIssueStatus}
+                pollingTimedOut={reportPollingTimedOut}
+                onRefresh={() => {
+                  setReportPollingTimedOut(false)
+                  setReportPollingRestartKey((key) => key + 1)
+                  refreshCase()
+                }}
+              />
+            ) : null}
+
             <div className="relative">
               <div className="min-w-0 space-y-4">
                 {showResultDashboard ? (
@@ -972,6 +1018,66 @@ function CaseBreadcrumb() {
   )
 }
 
+function ReportIssueStatusBanner({
+  status,
+  pollingTimedOut,
+  onRefresh,
+}: {
+  status: ReportIssueStatus
+  pollingTimedOut: boolean
+  onRefresh: () => void
+}) {
+  const normalizedStatus = normalizeReportIssueStatus(status)
+  const ui = getReportIssueUi(normalizedStatus)
+  const Icon =
+    ui.tone === "success"
+      ? CheckCircle2
+      : ui.tone === "danger" || ui.tone === "warning"
+        ? AlertTriangle
+        : ui.tone === "info"
+          ? Loader2
+          : FileSearch
+
+  return (
+    <section
+      aria-live="polite"
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border px-4 py-3 sm:flex-row sm:items-center sm:justify-between",
+        ui.tone === "success" && "border-emerald-200 bg-emerald-50 text-emerald-800",
+        ui.tone === "info" && "border-blue-200 bg-blue-50 text-blue-800",
+        ui.tone === "danger" && "border-red-200 bg-red-50 text-red-800",
+        ui.tone === "warning" && "border-amber-200 bg-amber-50 text-amber-800",
+        ui.tone === "neutral" && "border-slate-200 bg-slate-50 text-slate-700"
+      )}
+    >
+      <div className="flex min-w-0 items-start gap-3">
+        <Icon
+          className={cn("mt-0.5 size-4 shrink-0", ui.tone === "info" && "animate-spin")}
+          aria-hidden="true"
+        />
+        <div>
+          <p className="text-sm font-bold">{ui.label}</p>
+          <p className="mt-0.5 text-xs font-semibold leading-5 opacity-80">
+            {pollingTimedOut
+              ? "자동 상태 갱신을 멈췄습니다. 새로고침하여 현재 발급 상태를 확인해 주세요."
+              : ui.description}
+          </p>
+        </div>
+      </div>
+      {pollingTimedOut ? (
+        <Button
+          type="button"
+          variant="outline"
+          className="h-9 shrink-0 bg-white px-3 text-sm font-bold"
+          onClick={onRefresh}
+        >
+          상태 새로고침
+        </Button>
+      ) : null}
+    </section>
+  )
+}
+
 type ResultMediaMode = "original" | "overlay"
 
 function MockAnalysisOverlay() {
@@ -1093,6 +1199,11 @@ function CaseResultView({
   ).length
   const priorityReviewRange = getPriorityReviewRange(evidenceDetail, frameScores)
   const representativeFrames = evidenceDetail?.analysisInfo.representativeFrames ?? []
+  const reportDownloadEnabled = canDownloadIssuedReport({
+    reviewStatus: caseData.reviewStatus,
+    reportIssueStatus: caseData.reportIssueStatus,
+  })
+  const reportIssueUi = getReportIssueUi(caseData.reportIssueStatus)
 
   const reportSecurityEvent = useCallback((event: ProtectedSecurityEvent) => {
     if (!selectedEvidenceId) return
@@ -1156,8 +1267,9 @@ function CaseResultView({
           <Button
             type="button"
             variant="outline"
-            disabled={!evidenceDetail || caseData.reviewStatus !== "REPORT_APPROVED"}
+            disabled={!evidenceDetail || !reportDownloadEnabled}
             onClick={() => setReportDialogOpen(true)}
+            title={reportDownloadEnabled ? undefined : reportIssueUi.label}
             className="h-10 rounded-lg border-slate-200 bg-white px-4 text-sm font-semibold text-slate-950 shadow-none hover:bg-slate-50 dark:border-border dark:bg-card dark:text-foreground"
           >
             <Download className="size-4" aria-hidden="true" />
@@ -1172,6 +1284,8 @@ function CaseResultView({
           onClose={() => setReportDialogOpen(false)}
           data={evidenceDetail}
           reviewApproved={caseData.reviewStatus === "REPORT_APPROVED"}
+          reportIssueStatus={caseData.reportIssueStatus}
+          downloadEnabled={reportDownloadEnabled}
         />
       ) : null}
 
@@ -3069,11 +3183,17 @@ function CaseWorkflowPanel({
       setDecisionDialog(null)
       setMessage({
         type: "success",
-        text: nextDecision === "APPROVED" ? "검토가 승인되었습니다" : "보완 요청을 보냈습니다",
+        text:
+          nextDecision === "APPROVED"
+            ? "검토가 승인되었습니다. 보고서를 발급하고 있습니다."
+            : "보완 요청을 보냈습니다",
       })
       addAppNotification({
         title: nextDecision === "APPROVED" ? "검토가 승인되었습니다" : "보완 요청을 보냈습니다",
-        description: caseData.caseName,
+        description:
+          nextDecision === "APPROVED"
+            ? `${caseData.caseName} · 보고서 발급 중`
+            : caseData.caseName,
         href: window.location.pathname,
       })
       if (updated.reviewStatus !== caseData.reviewStatus) {

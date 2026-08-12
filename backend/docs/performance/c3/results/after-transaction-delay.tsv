@@ -1,0 +1,13 @@
+delay_ms	run	approval_api_ms	approval_tx_ms	approval_max_pg_xact_age_ms	approval_hikari_max	worker_e2e_ms	blockchain_http_ms	worker_max_tx_ms	worker_max_pg_xact_age_ms	spring_tx_at_http	http_hikari_before	http_hikari_max	http_hikari_after	http_max_pg_xact_age_ms	stub_calls
+0	1	99.002	57	0.000	1	565.926	9.339	40	0.000	false	0	0	0	0.000	1
+0	2	45.076	36	0.000	1	139.071	0.169	28	0.000	false	0	0	0	0.000	1
+0	3	35.827	24	0.000	1	123.850	0.144	26	0.000	false	0	0	0	0.000	1
+1000	1	30.722	24	0.000	1	1125.167	1005.250	21	0.000	false	0	0	0	0.000	1
+1000	2	29.643	19	0.000	1	1115.474	1005.572	17	0.000	false	0	0	0	0.000	1
+1000	3	23.507	15	0.000	1	1116.782	1005.633	18	0.000	false	0	0	0	0.000	1
+5000	1	25.230	16	0.000	1	5110.049	5003.673	29	0.000	false	0	0	0	0.000	1
+5000	2	28.491	16	0.000	1	5173.797	5009.107	51	0.000	false	0	0	0	0.000	1
+5000	3	35.183	28	0.000	1	5135.746	5006.341	24	0.000	false	0	0	0	0.000	1
+0	median	45.076	36	0.000	1	139.071	0.169	28	0.000	false	0	0	0	0.000	1
+1000	median	29.643	19	0.000	1	1116.782	1005.572	18	0.000	false	0	0	0	0.000	1
+5000	median	28.491	16	0.000	1	5135.746	5006.341	29	0.000	false	0	0	0	0.000	1

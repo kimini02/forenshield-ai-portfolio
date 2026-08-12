@@ -10,6 +10,7 @@ import com.example.demo.domain.enums.CaseReviewStatus;
 import com.example.demo.dto.detail.CaseDetailResponse;
 import com.example.demo.dto.detail.CaseEvidenceSummaryDto;
 import com.example.demo.service.evidence.hls.EvidenceHlsLookupService;
+import com.example.demo.service.report.ReportIssueTaskService;
 import com.example.demo.util.AnalysisStatusMapper;
 import com.example.demo.util.ApiDateTimeFormatter;
 import com.example.demo.util.OrganizationIdResolver;
@@ -26,6 +27,7 @@ public class CaseDetailAssembler {
 
     private final CaseEvidencePresentationService caseEvidencePresentationService;
     private final EvidenceHlsLookupService evidenceHlsLookupService;
+    private final ReportIssueTaskService reportIssueTaskService;
 
     public CaseDetailResponse assembleEmptyCase(String caseId, CaseProfile profile, User uploader) {
         Long ownerId = profile.getUploaderId();
@@ -35,6 +37,7 @@ public class CaseDetailAssembler {
                 .status("PENDING")
                 .createdAt(ApiDateTimeFormatter.formatUtc(profile.getUpdatedAt()))
                 .representativeEvidenceId(profile.getRepresentativeEvidenceId())
+                .reportIssueStatus(reportIssueTaskService.resolveCaseStatus(profile.getCaseProfileId()).name())
                 .evidences(List.of());
         applyRbacFields(builder, profile, uploader, ownerId);
         return builder.build();
@@ -79,6 +82,8 @@ public class CaseDetailAssembler {
                 .status(aggregateStatus(evidences, latestByEvidence))
                 .createdAt(ApiDateTimeFormatter.formatUtc(createdAt))
                 .representativeEvidenceId(representativeEvidenceId)
+                .reportIssueStatus(reportIssueTaskService.resolveCaseStatus(
+                        profile == null ? null : profile.getCaseProfileId()).name())
                 .evidences(summaries);
         applyRbacFields(builder, profile, uploader, ownerId);
         return builder.build();

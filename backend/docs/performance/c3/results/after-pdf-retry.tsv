@@ -1,0 +1,3 @@
+stage	case_profile	task_status	attempt_count	last_error	next_retry_at	report_count	snapshot_count	anchor_count	pdf_exists	pdf_bytes	pdf_sha256	same_path	pdf_file_count	stub_calls
+first_failure	REPORT_APPROVED	PENDING	1	present	present	0	0	0	true	108569	4d42a5a41d83eb7930c9832465404b7d7bbf1f8535d15fb6887a9e3e1329c92	true	1	0
+retry_success	REPORT_APPROVED	COMPLETED	2	cleared	cleared	1	1	1	true	108590	f1a5bd33828fdfe700ceb4b42d3e37bedf4dba906b0612f891efbb684ec3fecd	true	1	1

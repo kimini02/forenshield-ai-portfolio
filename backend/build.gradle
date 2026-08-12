@@ -102,6 +102,8 @@ tasks.register('generateTestSigningKeys') {
 }
 
 tasks.named('test') {
-	useJUnitPlatform()
+	useJUnitPlatform {
+		excludeTags 'c3-before-reproduction'
+	}
 	dependsOn tasks.named('generateTestSigningKeys')
 }

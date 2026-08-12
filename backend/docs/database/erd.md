@@ -52,6 +52,7 @@ AnalysisRequests
 AnalysisResults
 AnalysisModuleResults
 Reports
+ReportIssueTasks
 CustodyLogs
 ```
 
@@ -456,6 +457,35 @@ AI 분석 결과를 기반으로 생성된 PDF 보고서 정보를 저장합니�
 - 공개 검증에는 범주형 판정·분석 완료 시각·증거 매니페스트 서명 상태만 제공하고 사건명·파일명·담당자·수치 점수·구간·프레임은 비공개
 - 스냅샷이 없는 기존 발행 보고서는 호환을 위해 기존 데이터 조회를 허용하되, 새 발행 건은 반드시 스냅샷을 생성
 
+## 3.9.1 ReportIssueTasks
+
+사건 승인과 같은 transaction에서 Evidence/AnalysisResult별 보고서 발급 작업을 내구성 있게 등록합니다. 실제 PDF·파일 저장·블록체인 호출은 이 테이블의 task를 처리하는 후속 단계의 책임입니다.
+
+| 컬럼명 | 타입 | 제약 조건 | 설명 |
+| :--- | :--- | :--- | :--- |
+| `reportIssueTaskId` | Long | PK | 발급 작업 ID |
+| `caseProfileId` | Long | FK, Not Null | 승인된 사건 프로필 |
+| `evidenceId` | Long | FK, Not Null | 발급 대상 증거 |
+| `analysisResultId` | Long | FK, Not Null | 발급 대상 분석 결과 |
+| `requestedBy` | Long | FK, Not Null | 승인을 기록한 사용자 |
+| `status` | String | Not Null | `PENDING` · `PROCESSING` · `COMPLETED` · `FAILED` |
+| `attemptCount` | Integer | Not Null, Default 0 | 처리 시도 횟수 |
+| `lastError` | Text | Nullable | 마지막 실패 내용 |
+| `nextRetryAt` | LocalDateTime | Nullable | 다음 처리 가능 시각 |
+| `artifactPath` | String | Nullable | Report DB 저장 전 생성된 재시도용 결정적 PDF 경로 |
+| `createdAt` | LocalDateTime | Not Null | 생성 시각 |
+| `startedAt` | LocalDateTime | Nullable | 처리 시작 시각 |
+| `completedAt` | LocalDateTime | Nullable | 처리 완료 시각 |
+| `updatedAt` | LocalDateTime | Not Null | 갱신 시각 |
+
+- Task는 사건이 아니라 AnalysisResult 하나당 보고서 발급 작업 하나를 뜻함
+- 최신 AnalysisRequest가 `COMPLETED`이고 AnalysisResult가 존재할 때만 생성
+- 같은 AnalysisResult의 최신 Report가 이미 `ISSUED`이면 생성하지 않음
+- 동시 승인 중복 방지 제약은 C4 후속 범위
+- Worker claim은 PostgreSQL `FOR UPDATE SKIP LOCKED`로 짧게 잠근 뒤 `PROCESSING`으로 commit
+- PDF/File I/O와 Blockchain HTTP 중에는 Task row lock이나 장기 DB transaction을 유지하지 않음
+- Blockchain 결과가 불명확한 PENDING anchor는 자동 재전송하지 않고 `ANCHOR_OUTCOME_UNKNOWN`으로 수동 reconciliation 대상화
+
 ---
 
 ## 3.10 CustodyLogs
@@ -582,6 +612,10 @@ AnalysisRequests 1:1 AnalysisResults
 AnalysisResults 1:N AnalysisModuleResults
 AnalysisResults 1:N Reports
 Reports 1:1 ReportPublicationSnapshots
+CaseProfiles 1:N ReportIssueTasks
+Evidences 1:N ReportIssueTasks
+AnalysisResults 1:N ReportIssueTasks
+Users 1:N ReportIssueTasks       (ReportIssueTasks.requestedBy)
 ```
 
 ### 5.2 CustodyLogs — 다형 참조 (개별 FK 없음)
@@ -660,6 +694,21 @@ JPA에서 `@ManyToOne Evidence` 같은 직접 연관을 CustodyLogs에 매핑하
 6. 발행 입력값·공개 요약·산출물 목록·표시 정책을 ReportPublicationSnapshots에 1회 저장
 7. CustodyLogs: REPORT_CREATED (subjectHash = reportHash, targetType = REPORT)
 8. 다운로드 시 CustodyLogs: REPORT_DOWNLOADED (subjectHash = reportHash)
+```
+
+### 6.5 사건 승인과 보고서 발급 작업 등록
+
+```text
+1. 검토 승인 → CaseProfiles.reviewStatus = REPORT_APPROVED
+2. 발급 가능한 최신 완료 AnalysisResult 조회
+3. AnalysisResult별 ReportIssueTasks.status = PENDING 저장
+4. CaseProfile과 ReportIssueTask를 같은 DB transaction에서 commit
+5. Worker claim transaction: PENDING → PROCESSING
+6. transaction 밖에서 PDF 렌더링·파일 저장
+7. 짧은 transaction에서 Report ISSUED·발행 Snapshot 저장
+8. 짧은 transaction에서 BlockchainAnchor PENDING 저장
+9. transaction 밖에서 Blockchain HTTP 호출
+10. 짧은 transaction에서 Anchor 결과와 ReportIssueTask COMPLETED 저장
 ```
 
 ---

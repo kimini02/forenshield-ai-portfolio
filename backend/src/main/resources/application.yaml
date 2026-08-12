@@ -146,6 +146,14 @@ readiness:
 
 # 공개 보고서 QR·외부 열람 URL
 report:
+  issue:
+    worker:
+      enabled: ${REPORT_ISSUE_WORKER_ENABLED:true}
+      batch-size: ${REPORT_ISSUE_WORKER_BATCH_SIZE:10}
+      poll-interval-ms: ${REPORT_ISSUE_WORKER_POLL_INTERVAL_MS:5000}
+      processing-timeout-ms: ${REPORT_ISSUE_WORKER_PROCESSING_TIMEOUT_MS:300000}
+      max-attempts: ${REPORT_ISSUE_WORKER_MAX_ATTEMPTS:3}
+      retry-delay-ms: ${REPORT_ISSUE_WORKER_RETRY_DELAY_MS:30000}
   # 운영에서는 검증 URL 환경 변수를 반드시 설정한다. 미리보기 PDF에는 URL을 넣지 않는다.
   public-verify-base-url: ${REPORT_PUBLIC_VERIFY_BASE_URL}
   # 외부 열람 화면을 운영할 때만 설정한다. QR 검증 URL 발행에는 사용하지 않는다.

@@ -4,6 +4,7 @@ import type { HlsPlayback } from "@/lib/hls-playback"
 import { mockFetchCaseDetail, mockFetchEvidenceDetail } from "@/lib/mock/forensic-api"
 import { decodeRouteParam } from "@/lib/route-params"
 import type { ReviewStatus } from "@/lib/permissions"
+import type { ReportIssueStatus } from "@/lib/report-issue-status"
 
 export type { HlsPlayback, HlsStatus } from "@/lib/hls-playback"
 
@@ -343,6 +344,7 @@ export type CaseDetailData = {
   reviewAssignedAt?: string | null
   reviewerComment?: string | null
   reviewRounds?: CaseReviewRound[]
+  reportIssueStatus: ReportIssueStatus
   evidences: CaseEvidenceSummary[]
 }
 
