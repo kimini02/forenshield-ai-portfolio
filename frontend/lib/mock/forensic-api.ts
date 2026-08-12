@@ -90,6 +90,7 @@ type MockCaseRecord = {
   reviewStatus?: ReviewStatus | null
   reviewerComment?: string | null
   aiResult?: AiResult | null
+  reportIssueStatus?: import("@/lib/report-issue-status").ReportIssueStatus | null
   reviewRequestedAt?: string | null
   reviewAssignedAt?: string | null
   reviewRounds?: CaseReviewRound[]
@@ -129,6 +130,7 @@ const sampleCaseDetails: CaseDetailData[] = [
     caseId: "mock-deepfake-pair-20260627",
     caseName: "딥페이크 정상/의심 비교 사건",
     status: "COMPLETED",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: "2026-06-27T12:42:37",
     representativeEvidenceId: 2024062702,
     evidences: [
@@ -150,6 +152,7 @@ const sampleCaseDetails: CaseDetailData[] = [
     caseId: "mock-tamper-single-20260627",
     caseName: "영상 위변조 의심 단건 사건",
     status: "COMPLETED",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: "2026-06-27T12:42:56",
     representativeEvidenceId: 2024062703,
     evidences: [
@@ -165,6 +168,7 @@ const sampleCaseDetails: CaseDetailData[] = [
     caseId: "c4b37830-3653-4b23-b17b-5241b3783038",
     caseName: "가세연 녹취록 딥페이크 의혹 사건",
     status: "PROCESSING",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: "2026-06-18T14:30:00",
     representativeEvidenceId: 20240187,
     evidences: [
@@ -186,6 +190,7 @@ const sampleCaseDetails: CaseDetailData[] = [
     caseId: "a1f90210-8821-4c11-9a02-1100aa220011",
     caseName: "CCTV 영상 위변조 검증 요청",
     status: "COMPLETED",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: "2026-06-15T09:12:00",
     representativeEvidenceId: 20240185,
     evidences: [
@@ -213,6 +218,7 @@ const sampleCaseDetails: CaseDetailData[] = [
     caseId: "b7e44321-9912-4d22-8c13-2211bb331122",
     caseName: "음성 메일 증거 분석",
     status: "PROCESSING",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: "2026-06-17T11:45:00",
     representativeEvidenceId: 20240182,
     evidences: [
@@ -228,6 +234,7 @@ const sampleCaseDetails: CaseDetailData[] = [
     caseId: "d9c55632-aa23-4e33-9d24-3322cc442233",
     caseName: "인터뷰 클립 진위 확인",
     status: "FAILED",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: "2026-06-10T16:20:00",
     representativeEvidenceId: 20240181,
     evidences: [
@@ -1113,6 +1120,7 @@ export async function mockCreateCase(caseName: string): Promise<CaseDetailData> 
     caseId: record.caseId,
     caseName: record.caseName,
     status: "PENDING",
+    reportIssueStatus: "NOT_REQUIRED",
     createdAt: record.createdAt,
     representativeEvidenceId: null,
     createdBy: record.createdBy ?? null,
@@ -1560,6 +1568,7 @@ export async function mockRecordCaseReviewDecision(
           ? {
               ...item,
               reviewStatus,
+              reportIssueStatus: decision === "APPROVED" ? "PENDING" as const : "NOT_REQUIRED" as const,
               reviewerComment,
               reviewRounds: [...previousRounds, reviewRound],
             }
@@ -1569,6 +1578,7 @@ export async function mockRecordCaseReviewDecision(
         {
           ...targetCase,
           reviewStatus,
+          reportIssueStatus: decision === "APPROVED" ? "PENDING" as const : "NOT_REQUIRED" as const,
           reviewerComment,
           reviewRounds: [...previousRounds, reviewRound],
         },
@@ -2555,6 +2565,7 @@ export async function mockFetchCaseDetail(caseId: string): Promise<CaseDetailDat
         reviewAssignedAt: storedCase.reviewAssignedAt ?? null,
         reviewerComment: storedCase.reviewerComment ?? null,
         reviewRounds: storedCase.reviewRounds ?? [],
+        reportIssueStatus: storedCase.reportIssueStatus ?? "NOT_REQUIRED",
         evidences: [],
       }
     }
@@ -2587,6 +2598,7 @@ export async function mockFetchCaseDetail(caseId: string): Promise<CaseDetailDat
     reviewAssignedAt: caseRecord?.reviewAssignedAt ?? null,
     reviewerComment: caseRecord?.reviewerComment ?? null,
     reviewRounds: caseRecord?.reviewRounds ?? [],
+    reportIssueStatus: caseRecord?.reportIssueStatus ?? "NOT_REQUIRED",
     evidences,
   }
 }

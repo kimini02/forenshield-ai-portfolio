@@ -6,6 +6,7 @@ import { AlertCircle, Download, Loader2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { downloadEvidenceReport, type EvidenceDetailData } from "@/lib/api/evidence-detail"
 import { getApiErrorMessage } from "@/lib/api/errors"
+import { getReportIssueUi, type ReportIssueStatus } from "@/lib/report-issue-status"
 import { cn } from "@/lib/utils"
 
  export function ReportExportDialog({
@@ -13,11 +14,15 @@ import { cn } from "@/lib/utils"
   onClose,
   data,
   reviewApproved,
+  reportIssueStatus,
+  downloadEnabled,
 }: {
   open: boolean
   onClose: () => void
   data: EvidenceDetailData
   reviewApproved: boolean
+  reportIssueStatus: ReportIssueStatus
+  downloadEnabled: boolean
 }) {
   const [pdfActionLoading, setPdfActionLoading] = useState(false)
   const [pdfActionError, setPdfActionError] = useState<string | null>(null)
@@ -29,12 +34,13 @@ import { cn } from "@/lib/utils"
 
   const { evidenceInfo } = data
   const fileName = `analysis-report-${evidenceInfo.evidenceId}.pdf`
+  const reportIssueUi = getReportIssueUi(reportIssueStatus)
 
   useEffect(() => {
     let cancelled = false
     let objectUrl: string | null = null
 
-    if (!open) {
+    if (!open || !downloadEnabled) {
       return
     }
 
@@ -65,12 +71,12 @@ import { cn } from "@/lib/utils"
       cancelled = true
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [evidenceInfo.evidenceId, open, pdfPreviewReloadKey, reviewApproved])
+  }, [downloadEnabled, evidenceInfo.evidenceId, open, pdfPreviewReloadKey])
 
   if (!open) return null
 
   async function handleDownload() {
-    if (!reviewApproved || pdfActionLoading || pdfPreviewLoading) return
+    if (!downloadEnabled || pdfActionLoading || pdfPreviewLoading) return
 
     setPdfActionError(null)
     setPdfActionLoading(true)
@@ -152,9 +158,9 @@ import { cn } from "@/lib/utils"
           </div>
 
           <div className="mt-auto pt-6">
-            {!reviewApproved ? (
+            {!downloadEnabled ? (
               <p className="mb-2 rounded-xl bg-muted/40 px-3 py-2 text-center text-xs font-semibold leading-5 text-muted-foreground">
-                미리보기는 초안이며, 최종 PDF는 검토 승인 후 다운로드할 수 있습니다.
+                {reportIssueUi.description}
               </p>
             ) : null}
             {pdfActionError ? (
@@ -164,7 +170,7 @@ import { cn } from "@/lib/utils"
             ) : null}
             <Button
               type="button"
-              disabled={!reviewApproved || pdfActionLoading || pdfPreviewLoading}
+              disabled={!downloadEnabled || pdfActionLoading || pdfPreviewLoading}
               onClick={handleDownload}
               className="h-11 w-full bg-teal-600 text-base font-bold text-white hover:bg-teal-700 disabled:bg-muted disabled:text-muted-foreground"
             >
