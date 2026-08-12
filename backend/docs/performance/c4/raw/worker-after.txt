@@ -1,0 +1,11 @@
+C4 STEP 4 — Representative worker verification, VU10 run 3 fixture
+
+report_issue_tasks: analysis_result_id=6, count=1, status=COMPLETED, attempt_count=1
+reports: analysis_result_id=6, count=1, publication_status=ISSUED
+PDF files for the representative task: 1
+blockchain HTTP stub calls: 1
+blockchain_anchors: REPORT_HASH count=1, status=ANCHORED
+duplicate task groups: 0
+
+The HTTP endpoint was a loopback-only stub. Tokens, passwords, report verification values,
+absolute local paths, and generated transaction identifiers are intentionally omitted.

@@ -1,0 +1,2 @@
+concurrent	tx_committed	tx_failed	task_rows	max_duplicate	result
+2	2	0	2	2	REPRODUCED

@@ -1,0 +1,27 @@
+Command:
+TZ=UTC sh gradlew test --tests 'com.example.demo.performance.c4.ConcurrentApprovalAfterVerificationTest' --console=plain --info
+
+C4_AFTER_RESULT	CONSTRAINT	duplicateSqlState=23505	sameResultRows=1	differentResultRows=1	constraint=uq_report_issue_tasks_analysis_result_id
+C4_AFTER_RESULT	ATOMIC_RACE	concurrent=2	txCommitted=2	txFailed=0	affectedRows=[0, 1]	taskRows=1
+C4_AFTER_RESULT	ENV	postgresImage=postgres:16-alpine	postgresVersion=16.13	javaVersion=17.0.14	isolation=READ_COMMITTED	schedulerEnabled=false
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=2	run=1	http200=2	httpOther=0	taskRows=1	maxLatencyMs=131.285
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=2	run=2	http200=2	httpOther=0	taskRows=1	maxLatencyMs=46.040
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=2	run=3	http200=2	httpOther=0	taskRows=1	maxLatencyMs=37.423
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=5	run=1	http200=5	httpOther=0	taskRows=1	maxLatencyMs=164.979
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=5	run=2	http200=5	httpOther=0	taskRows=1	maxLatencyMs=64.601
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=5	run=3	http200=5	httpOther=0	taskRows=1	maxLatencyMs=60.214
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=10	run=1	http200=10	httpOther=0	taskRows=1	maxLatencyMs=124.144
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=10	run=2	http200=10	httpOther=0	taskRows=1	maxLatencyMs=95.887
+C4_AFTER_RESULT	HTTP_APPROVAL	concurrent=10	run=3	http200=10	httpOther=0	taskRows=1	maxLatencyMs=81.135
+C4_AFTER_RESULT	DUPLICATE_QUERY	rows=0
+C4_AFTER_RESULT	DOWNSTREAM	taskRows=1	claimed=1	completedTasks=1	reportRows=1	pdfFiles=1	blockchainHttpCalls=1	anchorRows=1
+C4_AFTER_RESULT	MULTI_RESULT	concurrent=2	http200=2	httpOther=0	resultCount=3	rowsByResult=[1, 1, 1]	totalTasks=3
+C4_AFTER_RESULT	EXISTING_STATE	status=PENDING	http200=1	inserted=0	taskRows=1	sameTaskId=true	stateUnchanged=true
+C4_AFTER_RESULT	EXISTING_STATE	status=PROCESSING	http200=1	inserted=0	taskRows=1	sameTaskId=true	stateUnchanged=true
+C4_AFTER_RESULT	EXISTING_STATE	status=COMPLETED	http200=1	inserted=0	taskRows=1	sameTaskId=true	stateUnchanged=true
+C4_AFTER_RESULT	EXISTING_STATE	status=FAILED	http200=1	inserted=0	taskRows=1	sameTaskId=true	stateUnchanged=true
+C4_AFTER_RESULT	ISSUED_REPORT	http200=1	taskRows=0	compatibilitySkip=true
+C4_AFTER_RESULT	ROLLBACK	profile=REVIEW_ASSIGNED	taskRows=0	sameTransaction=true
+
+Result: 8 tests, 0 failures, 0 errors, 0 skipped; BUILD SUCCESSFUL.
+Full Backend regression: 359 tests, 0 failures, 0 errors, 0 skipped; BUILD SUCCESSFUL.

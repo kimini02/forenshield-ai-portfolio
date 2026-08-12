@@ -1,0 +1,13 @@
+C4 STEP 4 — Gatling VU50, isolated HTTP/PostgreSQL, 2026-08-12
+
+Run 1: requests=50 OK=50 KO=0 min=432ms p50=456ms p95=488ms p99=513ms max=513ms mean=460ms
+DB: analysis_result_id=7 task_count=1 status=PENDING duplicate_groups=0
+Report: build/reports/gatling/concurrentapprovalsimulation-20260812140300520
+
+Run 2: requests=50 OK=50 KO=0 min=415ms p50=433ms p95=466ms p99=467ms max=467ms mean=437ms
+DB: analysis_result_id=8 task_count=1 status=PENDING duplicate_groups=0
+Report: build/reports/gatling/concurrentapprovalsimulation-20260812140304264
+
+Run 3: requests=50 OK=50 KO=0 min=433ms p50=454ms p95=484ms p99=485ms max=485ms mean=457ms
+DB: analysis_result_id=9 task_count=1 status=PENDING duplicate_groups=0
+Report: build/reports/gatling/concurrentapprovalsimulation-20260812140308175

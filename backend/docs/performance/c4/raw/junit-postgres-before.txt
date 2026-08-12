@@ -1,0 +1,18 @@
+C4_BEFORE_RESULT	SCHEMA_RACE	concurrent=2	txCommitted=2	txFailed=0	taskRows=2	analysisResultId=1
+C4_BEFORE_RESULT	SCHEMA_RACE_ROWS	taskId=1	analysisResultId=1	evidenceId=1	status=PENDING	requestedBy=2	attemptCount=0
+C4_BEFORE_RESULT	SCHEMA_RACE_ROWS	taskId=2	analysisResultId=1	evidenceId=1	status=PENDING	requestedBy=2	attemptCount=0
+C4_BEFORE_RESULT	ENV	postgresImage=postgres:16-alpine	postgresVersion=16.13	javaVersion=17.0.14	isolation=READ_COMMITTED	schedulerEnabled=false
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=2	run=1	http200=2	httpOther=0	taskRows=2	maxLatencyMs=132.688	analysisResultId=2
+C4_BEFORE_RESULT	HTTP_APPROVAL_ROWS	taskId=3	analysisResultId=2	evidenceId=2	status=PENDING	requestedBy=4	attemptCount=0
+C4_BEFORE_RESULT	HTTP_APPROVAL_ROWS	taskId=4	analysisResultId=2	evidenceId=2	status=PENDING	requestedBy=4	attemptCount=0
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=2	run=2	http200=2	httpOther=0	taskRows=2	maxLatencyMs=54.837	analysisResultId=3
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=2	run=3	http200=2	httpOther=0	taskRows=2	maxLatencyMs=50.781	analysisResultId=4
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=5	run=1	http200=5	httpOther=0	taskRows=5	maxLatencyMs=108.530	analysisResultId=5
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=5	run=2	http200=5	httpOther=0	taskRows=5	maxLatencyMs=111.347	analysisResultId=6
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=5	run=3	http200=5	httpOther=0	taskRows=5	maxLatencyMs=140.802	analysisResultId=7
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=10	run=1	http200=10	httpOther=0	taskRows=10	maxLatencyMs=338.801	analysisResultId=8
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=10	run=2	http200=10	httpOther=0	taskRows=10	maxLatencyMs=345.332	analysisResultId=9
+C4_BEFORE_RESULT	HTTP_APPROVAL	concurrent=10	run=3	http200=10	httpOther=0	taskRows=10	maxLatencyMs=452.582	analysisResultId=10
+C4_BEFORE_RESULT	DUPLICATE_WORKER	taskRows=2	claimed=2	reportRows=2	pdfFiles=2	blockchainHttpCalls=2	anchorRows=2
+C4_BEFORE_RESULT	DUPLICATE_WORKER_ROWS	taskId=54	analysisResultId=11	evidenceId=11	status=COMPLETED	requestedBy=22	attemptCount=1
+C4_BEFORE_RESULT	DUPLICATE_WORKER_ROWS	taskId=55	analysisResultId=11	evidenceId=11	status=COMPLETED	requestedBy=22	attemptCount=1

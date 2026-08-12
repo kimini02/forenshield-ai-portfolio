@@ -1,0 +1,10 @@
+run	users	requests	http_200	other_status	failed	min_ms	p50_ms	p95_ms	p99_ms	max_ms	mean_ms	task_count	duplicate_groups	report_directory
+vu2-r1	2	2	2	0	0	582	587	587	587	587	585	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140057404
+vu2-r2	2	2	2	0	0	666	666	666	666	666	666	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140241577
+vu2-r3	2	2	2	0	0	408	408	408	408	408	408	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140245523
+vu10-r1	10	10	10	0	0	455	456	456	456	456	456	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140249158
+vu10-r2	10	10	10	0	0	444	445	445	445	445	445	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140252987
+vu10-r3	10	10	10	0	0	472	472	472	472	472	472	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140256673
+vu50-r1	50	50	50	0	0	432	456	488	513	513	460	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140300520
+vu50-r2	50	50	50	0	0	415	433	466	467	467	437	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140304264
+vu50-r3	50	50	50	0	0	433	454	484	485	485	457	1	0	build/reports/gatling/concurrentapprovalsimulation-20260812140308175

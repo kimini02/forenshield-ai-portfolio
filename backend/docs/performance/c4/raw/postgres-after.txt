@@ -1,0 +1,23 @@
+Source: ConcurrentApprovalAfterVerificationTest, PostgreSQL 16.13 Testcontainers
+
+Unique constraint catalog lookup:
+uq_report_issue_tasks_analysis_result_id
+
+Ordinary duplicate INSERT:
+SQLSTATE 23505
+
+Atomic concurrent insert affected rows:
+0, 1
+
+Duplicate-group verification query after concurrent approval:
+0 rows
+
+Representative concurrent approval invariant:
+analysis_result task row count = 1
+status = PENDING before worker claim
+
+Migration file validation in an isolated postgres:16-alpine container:
+preflight duplicate rows = 0
+migration result = DO
+created constraint = uq_report_issue_tasks_analysis_result_id UNIQUE (analysis_result_id)
+second ordinary INSERT SQLSTATE = 23505

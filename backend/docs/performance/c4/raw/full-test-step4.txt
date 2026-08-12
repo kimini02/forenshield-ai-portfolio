@@ -1,0 +1,11 @@
+C4 STEP 4 full regression test, 2026-08-12
+
+Command: TZ=UTC sh gradlew test --rerun-tasks --console=plain
+Result: BUILD SUCCESSFUL
+Tests: 359
+Failures: 0
+Errors: 0
+Skipped: 0
+
+Counts were summed from build/test-results/test/TEST-*.xml after the uncached run.
+Compiler deprecation warnings were present but did not fail the build.

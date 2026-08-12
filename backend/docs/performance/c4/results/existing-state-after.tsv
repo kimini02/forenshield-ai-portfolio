@@ -1,0 +1,6 @@
+existing_status	http_200	new_task_rows	total_task_rows	same_task_id	state_unchanged
+PENDING	1	0	1	true	true
+PROCESSING	1	0	1	true	true
+COMPLETED	1	0	1	true	true
+FAILED	1	0	1	true	true
+ISSUED_REPORT_WITHOUT_TASK	1	0	0	not_applicable	true
