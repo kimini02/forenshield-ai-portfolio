@@ -10,8 +10,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface ReportIssueTaskRepository extends JpaRepository<ReportIssueTask, Long> {
 
-    boolean existsByAnalysisResultId(Long analysisResultId);
-
     @Query("SELECT task.status FROM ReportIssueTask task WHERE task.caseProfileId = :caseProfileId")
     List<ReportIssueTaskStatus> findStatusesByCaseProfileId(@Param("caseProfileId") Long caseProfileId);
 

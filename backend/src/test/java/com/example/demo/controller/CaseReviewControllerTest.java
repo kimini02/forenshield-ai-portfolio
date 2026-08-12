@@ -23,6 +23,7 @@ import com.example.demo.repository.EvidenceRepository;
 import com.example.demo.repository.UserRepository;
 import com.example.demo.repository.ReportRepository;
 import com.example.demo.repository.ReportIssueTaskRepository;
+import com.example.demo.repository.ReportIssueTaskInsertRepository;
 import com.example.demo.service.blockchain.BlockchainAnchorService;
 import com.example.demo.service.report.ReportPdfService;
 import com.example.demo.support.JwtTestSupport;
@@ -49,6 +50,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.reset;
@@ -85,6 +88,9 @@ class CaseReviewControllerTest {
     private ReportIssueTaskRepository reportIssueTaskRepository;
 
     @SpyBean
+    private ReportIssueTaskInsertRepository reportIssueTaskInsertRepository;
+
+    @SpyBean
     private ReportPdfService reportPdfService;
 
     @SpyBean
@@ -110,7 +116,7 @@ class CaseReviewControllerTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        reset(reportIssueTaskRepository, reportPdfService, blockchainAnchorService);
+        reset(reportIssueTaskRepository, reportIssueTaskInsertRepository, reportPdfService, blockchainAnchorService);
         custodyLogRepository.deleteAll();
         blockchainAnchorRepository.deleteAll();
         reportRepository.deleteAll();
@@ -305,7 +311,8 @@ class CaseReviewControllerTest {
         saveAnalysisResultForLatest(completedEvidence, "rollback");
         CaseProfile profile = assignedProfile();
         doThrow(new DataIntegrityViolationException("forced task insert failure"))
-                .when(reportIssueTaskRepository).saveAllAndFlush(anyList());
+                .when(reportIssueTaskInsertRepository)
+                .insertPendingIfAbsent(anyLong(), anyLong(), anyLong(), anyLong(), any(LocalDateTime.class));
 
         int responseStatus;
         try {
@@ -322,7 +329,7 @@ class CaseReviewControllerTest {
             responseStatus = 500;
         }
 
-        reset(reportIssueTaskRepository);
+        reset(reportIssueTaskRepository, reportIssueTaskInsertRepository);
         assertThat(responseStatus).isGreaterThanOrEqualTo(500);
         assertThat(caseProfileRepository.findById(profile.getCaseProfileId()).orElseThrow().getReviewStatus())
                 .isEqualTo(CaseReviewStatus.REVIEW_ASSIGNED);

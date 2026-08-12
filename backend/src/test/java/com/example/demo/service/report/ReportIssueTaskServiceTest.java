@@ -11,6 +11,7 @@ import com.example.demo.domain.enums.ReportIssueTaskStatus;
 import com.example.demo.repository.AnalysisRequestRepository;
 import com.example.demo.repository.AnalysisResultRepository;
 import com.example.demo.repository.ReportIssueTaskRepository;
+import com.example.demo.repository.ReportIssueTaskInsertRepository;
 import com.example.demo.repository.ReportRepository;
 import java.util.List;
 import java.util.Optional;
@@ -22,6 +23,8 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -42,6 +45,9 @@ class ReportIssueTaskServiceTest {
     @Mock
     private ReportIssueTaskRepository reportIssueTaskRepository;
 
+    @Mock
+    private ReportIssueTaskInsertRepository reportIssueTaskInsertRepository;
+
     private ReportIssueTaskService service;
 
     @BeforeEach
@@ -50,7 +56,8 @@ class ReportIssueTaskServiceTest {
                 analysisRequestRepository,
                 analysisResultRepository,
                 reportRepository,
-                reportIssueTaskRepository
+                reportIssueTaskRepository,
+                reportIssueTaskInsertRepository
         );
     }
 
@@ -61,18 +68,25 @@ class ReportIssueTaskServiceTest {
         Evidence first = evidence(1L);
         Evidence second = evidence(2L);
         Evidence third = evidence(3L);
-        stubEligible(first, 11L, 101L);
+        stubEligible(first, 11L, 103L);
         stubEligible(second, 12L, 102L);
-        stubEligible(third, 13L, 103L);
-        when(reportIssueTaskRepository.saveAllAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        stubEligible(third, 13L, 101L);
+        when(reportIssueTaskInsertRepository.insertPendingIfAbsent(
+                anyLong(), anyLong(), anyLong(), anyLong(), any())).thenReturn(1);
 
-        var tasks = service.createPendingTasks(profile, List.of(first, second, third), 50L);
+        int inserted = service.createPendingTasks(profile, List.of(first, second, third), 50L);
 
-        assertThat(tasks).hasSize(3)
-                .extracting(task -> task.getStatus())
-                .containsOnly(ReportIssueTaskStatus.PENDING);
-        assertThat(tasks).extracting(task -> task.getAnalysisResultId())
-                .containsExactly(101L, 102L, 103L);
+        assertThat(inserted).isEqualTo(3);
+        var ordered = inOrder(reportIssueTaskInsertRepository);
+        ordered.verify(reportIssueTaskInsertRepository)
+                .insertPendingIfAbsent(org.mockito.ArgumentMatchers.eq(40L), org.mockito.ArgumentMatchers.eq(3L),
+                        org.mockito.ArgumentMatchers.eq(101L), org.mockito.ArgumentMatchers.eq(50L), any());
+        ordered.verify(reportIssueTaskInsertRepository)
+                .insertPendingIfAbsent(org.mockito.ArgumentMatchers.eq(40L), org.mockito.ArgumentMatchers.eq(2L),
+                        org.mockito.ArgumentMatchers.eq(102L), org.mockito.ArgumentMatchers.eq(50L), any());
+        ordered.verify(reportIssueTaskInsertRepository)
+                .insertPendingIfAbsent(org.mockito.ArgumentMatchers.eq(40L), org.mockito.ArgumentMatchers.eq(1L),
+                        org.mockito.ArgumentMatchers.eq(103L), org.mockito.ArgumentMatchers.eq(50L), any());
     }
 
     @Test
@@ -82,9 +96,7 @@ class ReportIssueTaskServiceTest {
         AnalysisRequest request = request(11L, AnalysisStatus.ANALYZING);
         when(analysisRequestRepository.findTopByEvidenceIdOrderByRequestedAtDesc(1L))
                 .thenReturn(Optional.of(request));
-        when(reportIssueTaskRepository.saveAllAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        assertThat(service.createPendingTasks(profile, List.of(evidence), 50L)).isEmpty();
+        assertThat(service.createPendingTasks(profile, List.of(evidence), 50L)).isZero();
         verify(analysisResultRepository, never()).findByAnalysisRequestId(any());
     }
 
@@ -96,9 +108,7 @@ class ReportIssueTaskServiceTest {
         when(analysisRequestRepository.findTopByEvidenceIdOrderByRequestedAtDesc(1L))
                 .thenReturn(Optional.of(request));
         when(analysisResultRepository.findByAnalysisRequestId(11L)).thenReturn(Optional.empty());
-        when(reportIssueTaskRepository.saveAllAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        assertThat(service.createPendingTasks(profile, List.of(evidence), 50L)).isEmpty();
+        assertThat(service.createPendingTasks(profile, List.of(evidence), 50L)).isZero();
     }
 
     @Test
@@ -114,10 +124,9 @@ class ReportIssueTaskServiceTest {
         when(analysisResultRepository.findByAnalysisRequestId(11L)).thenReturn(Optional.of(result));
         when(reportRepository.findTopByAnalysisResultIdOrderByCreatedAtDesc(101L))
                 .thenReturn(Optional.of(issued));
-        when(reportIssueTaskRepository.saveAllAndFlush(any())).thenAnswer(invocation -> invocation.getArgument(0));
-
-        assertThat(service.createPendingTasks(profile, List.of(evidence), 50L)).isEmpty();
-        verify(reportIssueTaskRepository, never()).existsByAnalysisResultId(101L);
+        assertThat(service.createPendingTasks(profile, List.of(evidence), 50L)).isZero();
+        verify(reportIssueTaskInsertRepository, never())
+                .insertPendingIfAbsent(anyLong(), anyLong(), anyLong(), anyLong(), any());
     }
 
     @Test
@@ -142,7 +151,6 @@ class ReportIssueTaskServiceTest {
                 .thenReturn(Optional.of(request));
         when(analysisResultRepository.findByAnalysisRequestId(requestId)).thenReturn(Optional.of(result));
         when(reportRepository.findTopByAnalysisResultIdOrderByCreatedAtDesc(resultId)).thenReturn(Optional.empty());
-        when(reportIssueTaskRepository.existsByAnalysisResultId(resultId)).thenReturn(false);
     }
 
     private Evidence evidence(Long evidenceId) {

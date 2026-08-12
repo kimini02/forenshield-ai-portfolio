@@ -466,7 +466,7 @@ AI 분석 결과를 기반으로 생성된 PDF 보고서 정보를 저장합니�
 | `reportIssueTaskId` | Long | PK | 발급 작업 ID |
 | `caseProfileId` | Long | FK, Not Null | 승인된 사건 프로필 |
 | `evidenceId` | Long | FK, Not Null | 발급 대상 증거 |
-| `analysisResultId` | Long | FK, Not Null | 발급 대상 분석 결과 |
+| `analysisResultId` | Long | FK, Not Null, Unique | 발급 대상 분석 결과 |
 | `requestedBy` | Long | FK, Not Null | 승인을 기록한 사용자 |
 | `status` | String | Not Null | `PENDING` · `PROCESSING` · `COMPLETED` · `FAILED` |
 | `attemptCount` | Integer | Not Null, Default 0 | 처리 시도 횟수 |
@@ -479,9 +479,10 @@ AI 분석 결과를 기반으로 생성된 PDF 보고서 정보를 저장합니�
 | `updatedAt` | LocalDateTime | Not Null | 갱신 시각 |
 
 - Task는 사건이 아니라 AnalysisResult 하나당 보고서 발급 작업 하나를 뜻함
+- DB의 `UNIQUE (analysis_result_id)`가 여러 Backend instance에서도 Task 유일성을 최종 보장함
+- 생성은 PostgreSQL `INSERT ... ON CONFLICT (analysis_result_id) DO NOTHING`으로 중복을 정상 no-op 처리함
 - 최신 AnalysisRequest가 `COMPLETED`이고 AnalysisResult가 존재할 때만 생성
 - 같은 AnalysisResult의 최신 Report가 이미 `ISSUED`이면 생성하지 않음
-- 동시 승인 중복 방지 제약은 C4 후속 범위
 - Worker claim은 PostgreSQL `FOR UPDATE SKIP LOCKED`로 짧게 잠근 뒤 `PROCESSING`으로 commit
 - PDF/File I/O와 Blockchain HTTP 중에는 Task row lock이나 장기 DB transaction을 유지하지 않음
 - Blockchain 결과가 불명확한 PENDING anchor는 자동 재전송하지 않고 `ANCHOR_OUTCOME_UNKNOWN`으로 수동 reconciliation 대상화
@@ -614,7 +615,7 @@ AnalysisResults 1:N Reports
 Reports 1:1 ReportPublicationSnapshots
 CaseProfiles 1:N ReportIssueTasks
 Evidences 1:N ReportIssueTasks
-AnalysisResults 1:N ReportIssueTasks
+AnalysisResults 1:0..1 ReportIssueTasks
 Users 1:N ReportIssueTasks       (ReportIssueTasks.requestedBy)
 ```
 

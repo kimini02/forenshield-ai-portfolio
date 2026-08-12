@@ -1,0 +1,2 @@
+concurrent	tx_committed	tx_failed	affected_rows	task_rows	duplicate_groups	result
+2	2	0	0,1	1	0	PREVENTED

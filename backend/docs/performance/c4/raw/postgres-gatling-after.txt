@@ -1,0 +1,15 @@
+C4 STEP 4 — immediate PostgreSQL verification after each Gatling run
+
+run|users|analysis_result_id|task_count|status|duplicate_groups
+vu2-r1|2|1|1|PENDING|0
+vu2-r2|2|2|1|PENDING|0
+vu2-r3|2|3|1|PENDING|0
+vu10-r1|10|4|1|PENDING|0
+vu10-r2|10|5|1|PENDING|0
+vu10-r3|10|6|1|PENDING|0
+vu50-r1|50|7|1|PENDING|0
+vu50-r2|50|8|1|PENDING|0
+vu50-r3|50|9|1|PENDING|0
+
+The task row/count query and the Before-compatible duplicate-group query were executed immediately
+after each run. Each run used a distinct AnalysisResult. IDs are isolated fixture identifiers.

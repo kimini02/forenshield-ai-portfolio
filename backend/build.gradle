@@ -2,6 +2,29 @@ plugins {
 	id 'java'
 	id 'org.springframework.boot' version '3.5.14'
 	id 'io.spring.dependency-management' version '1.1.7'
+	id 'io.gatling.gradle' version '3.15.1.2'
+}
+
+sourceSets {
+	gatling {
+		java.srcDirs = ['docs/performance/c4/gatling']
+		resources.srcDirs = ['docs/performance/c4/gatling-resources']
+	}
+}
+
+gatling {
+	includeMainOutput = false
+	includeTestOutput = false
+}
+
+configurations.matching { it.name.startsWith('gatling') }.configureEach {
+	resolutionStrategy.eachDependency {
+		if (requested.group == 'io.netty' && requested.name.startsWith('netty-tcnative')) {
+			useVersion '2.0.77.Final'
+		} else if (requested.group == 'io.netty') {
+			useVersion '4.2.14.Final'
+		}
+	}
 }
 
 group = 'com.example'
@@ -103,7 +126,7 @@ tasks.register('generateTestSigningKeys') {
 
 tasks.named('test') {
 	useJUnitPlatform {
-		excludeTags 'c3-before-reproduction'
+		excludeTags 'c3-before-reproduction', 'c4-before-reproduction'
 	}
 	dependsOn tasks.named('generateTestSigningKeys')
 }
