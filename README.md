@@ -92,7 +92,7 @@ Next.js → Spring Boot → PostgreSQL / Redis / S3 / RabbitMQ → AI Worker
 
 ### 01. 증거 관리 · 무결성 검증
 
-![증거 관리 및 무결성 검증 화면](./docs/images/readme/evidence-preservation.png)
+![증거 관리 및 무결성 검증 데모](./docs/images/readme/evidence-integrity-demo.gif)
 
 영상 증거의 SHA-256, 전자서명, 블록체인 앵커와 CoC 처리 이력을 확인합니다.
 
