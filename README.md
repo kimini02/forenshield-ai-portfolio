@@ -4,7 +4,7 @@
 
 **📅 2026.05.15 ~ 2026.07.31 · 👥 Team Project · 🏆 최우수상**
 
-✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting) · 🎬 [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
+✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting) · 🎬 [Demo](https://www.youtube.com/watch?v=jiSKK2kp57U)
 
 ![ForenShield AI](./docs/images/readme/forenshield-hero.png)
 
@@ -114,11 +114,37 @@ AI 분석 결과를 확인하고 검토자가 승인 또는 보완 요청을 처
 
 ## Tech Stack
 
-**Backend** Java 17 · Spring Boot · Spring Security · Spring Data JPA<br>
-**Data** PostgreSQL · Redis · RabbitMQ · Amazon S3<br>
-**Frontend** Next.js · React · TypeScript · Tailwind CSS<br>
-**Infra** Docker · Kubernetes · AWS<br>
-**AI / Media** FastAPI · FFmpeg
+### Backend
+
+![Java 17](https://img.shields.io/badge/Java_17-007396?style=for-the-badge&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=for-the-badge&logo=springboot&logoColor=white)
+![Spring Security](https://img.shields.io/badge/Spring_Security-6DB33F?style=for-the-badge&logo=springsecurity&logoColor=white)
+![Spring Data JPA](https://img.shields.io/badge/Spring_Data_JPA-6DB33F?style=for-the-badge&logo=spring&logoColor=white)
+
+### Data
+
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-FF4438?style=for-the-badge&logo=redis&logoColor=white)
+![RabbitMQ](https://img.shields.io/badge/RabbitMQ-FF6600?style=for-the-badge&logo=rabbitmq&logoColor=white)
+![Amazon S3](https://img.shields.io/badge/Amazon_S3-569A31?style=for-the-badge&logo=amazons3&logoColor=white)
+
+### Frontend
+
+![Next.js](https://img.shields.io/badge/Next.js-000000?style=for-the-badge&logo=nextdotjs&logoColor=white)
+![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-06B6D4?style=for-the-badge&logo=tailwindcss&logoColor=white)
+
+### Infra
+
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=for-the-badge&logo=docker&logoColor=white)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-326CE5?style=for-the-badge&logo=kubernetes&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazonwebservices&logoColor=white)
+
+### AI / Media
+
+![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=for-the-badge&logo=fastapi&logoColor=white)
+![FFmpeg](https://img.shields.io/badge/FFmpeg-007808?style=for-the-badge&logo=ffmpeg&logoColor=white)
 
 ---
 
@@ -214,4 +240,4 @@ pnpm dev
 ## Links
 
 - ✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting)
-- 🎬 [Demo](https://youtu.be/OynSzlmiHDk?si=EZMhmrof8DY5XY36)
+- 🎬 [Demo](https://www.youtube.com/watch?v=jiSKK2kp57U)
