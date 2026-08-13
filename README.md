@@ -112,9 +112,10 @@ AI 분석 결과를 확인하고 검토자가 승인 또는 보완 요청을 처
 
 기능을 단위 작업으로 나누어 **Jira Kanban**으로 진행 상태를 관리하고, 요구사항과 기능 기준을 문서화해 팀 개발 기준으로 사용했습니다.
 
-📄 [요구사항 명세서](https://drive.google.com/file/d/18Y_JEMMTfivIaEygiZfX2B4ReLYvYn3w/view?usp=drivesdk)<br>
-📄 [기능 명세서](https://drive.google.com/file/d/1txArNcf5UiIWhrO8St1wj1NCX1QTWP80/view?usp=drivesdk)<br>
-📊 [WBS](https://docs.google.com/spreadsheets/d/1GbQNk5yW8Pf1L6WSxx_YFSXqacV8IZveyUWPlXxEY5g/edit?usp=drivesdk)
+📄 [요구사항 명세서](https://docs.google.com/spreadsheets/d/1nj8sLVO9Y8pRHsacLSlMzTulv-4AlAk0/edit?gid=1200642718#gid=1200642718)<br>
+📄 [기능 명세서](https://docs.google.com/spreadsheets/d/19dD72vgj0kyQA8T4oZjTckR_suT5WqCJ/edit?usp=sharing&ouid=112282862503330137253&rtpof=true&sd=true)<br>
+📄 [기능 요건 정의서](https://drive.google.com/file/d/17WA2TkitxsnvhaEH7gYh9-pxUXhvsEfK/view?usp=sharing)<br>
+📊 [WBS](https://docs.google.com/spreadsheets/d/1fH5CeWaGAcZ0oWaBqmID9hCUsyH08djy/edit?usp=sharing&ouid=112282862503330137253&rtpof=true&sd=true)
 
 ---
 
