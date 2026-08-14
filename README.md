@@ -98,8 +98,7 @@ Next.js → Spring Boot → PostgreSQL / Redis / S3 / RabbitMQ → AI Worker
 
 ### 02. AI 분석 · 검토
 
-![AI 분석 및 검토 화면](./docs/images/readme/ai-analysis.png)
-![검토 및 승인 화면](./docs/images/readme/review-approval.png)
+![AI 분석 및 검토 데모](./docs/images/readme/ai-review-demo.gif)
 
 AI 분석 결과를 확인하고 검토자가 승인 또는 보완 요청을 처리합니다.
 
