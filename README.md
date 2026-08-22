@@ -4,7 +4,7 @@
 
 **📅 2026.05.15 ~ 2026.07.31 · 👥 Team Project · 🏆 최우수상**
 
-✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting) · 🎬 [Demo](https://www.youtube.com/watch?v=jiSKK2kp57U)
+✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting) · 🎬 [Demo](https://www.youtube.com/watch?v=jiSKK2kp57U) · 📊 [PPT](https://canva.link/iwoeob842t8t0xa)
 
 ![ForenShield AI](./docs/images/readme/forenshield-hero.png)
 
@@ -240,3 +240,4 @@ pnpm dev
 
 - ✍️ [Tech Blog](https://mini-0923.tistory.com/category/Troubleshooting)
 - 🎬 [Demo](https://www.youtube.com/watch?v=jiSKK2kp57U)
+- 📊 [PPT](https://canva.link/iwoeob842t8t0xa)
